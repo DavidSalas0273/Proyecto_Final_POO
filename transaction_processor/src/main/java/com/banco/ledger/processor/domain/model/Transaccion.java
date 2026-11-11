@@ -4,20 +4,23 @@ import com.banco.ledger.processor.domain.contract.TransactionEventRecord;
 import com.banco.ledger.processor.domain.estado.EstadoRecibida;
 import com.banco.ledger.processor.domain.estado.EstadoTransaccion;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Agregado rico de una transferencia P2P.
+ * Agregado rico de un movimiento del ledger: transferencia P2P o recarga de saldo.
  * Su ciclo de vida se gobierna con el patrón State: cada operación delega en el
  * estado actual, que decide la transición o lanza IllegalStateException.
+ * La forma de mover el dinero la decide polimórficamente {@link TipoMovimiento}.
  */
 public class Transaccion {
 
     public static final String MOTIVO_FONDOS_INSUFICIENTES = "INSUFFICIENT_FUNDS";
 
     private final TransactionId id;
+    private final TipoMovimiento tipo;
     private final String origen;
     private final String destino;
     private final MontoDinero monto;
@@ -25,24 +28,34 @@ public class Transaccion {
     private String motivo;
     private Instant actualizadaEn;
 
-    private Transaccion(TransactionId id, String origen, String destino, MontoDinero monto, Instant recibidaEn) {
+    private Transaccion(TransactionId id, TipoMovimiento tipo, String origen, String destino,
+                        MontoDinero monto, Instant recibidaEn) {
         this.id = Objects.requireNonNull(id, "El id es obligatorio");
-        this.origen = requerirTexto(origen, "origen");
+        this.tipo = Objects.requireNonNull(tipo, "El tipo es obligatorio");
+        this.origen = origen;
         this.destino = requerirTexto(destino, "destino");
         this.monto = Objects.requireNonNull(monto, "El monto es obligatorio");
         this.actualizadaEn = Objects.requireNonNull(recibidaEn, "La fecha de recepción es obligatoria");
         if (!monto.esPositivo()) {
-            throw new IllegalArgumentException("El monto de la transacción debe ser mayor que cero");
-        }
-        if (this.origen.equalsIgnoreCase(this.destino)) {
-            throw new IllegalArgumentException("El origen y el destino no pueden coincidir");
+            throw new IllegalArgumentException("El monto del movimiento debe ser mayor que cero");
         }
         this.estado = EstadoRecibida.INSTANCIA;
     }
 
-    public static Transaccion recibir(TransactionId id, String origen, String destino,
-                                      MontoDinero monto, Instant recibidaEn) {
-        return new Transaccion(id, origen, destino, monto, recibidaEn);
+    /** Transferencia P2P de {@code origen} a {@code destino}. */
+    public static Transaccion recibirTransferencia(TransactionId id, String origen, String destino,
+                                                   MontoDinero monto, Instant recibidaEn) {
+        String origenValidado = requerirTexto(origen, "origen");
+        if (origenValidado.equalsIgnoreCase(requerirTexto(destino, "destino"))) {
+            throw new IllegalArgumentException("El origen y el destino no pueden coincidir");
+        }
+        return new Transaccion(id, TipoMovimiento.TRANSFER, origenValidado, destino, monto, recibidaEn);
+    }
+
+    /** Recarga de saldo en la cuenta de {@code titular}. */
+    public static Transaccion recibirRecarga(TransactionId id, String titular, MontoDinero monto,
+                                             Instant recibidaEn) {
+        return new Transaccion(id, TipoMovimiento.DEPOSIT, null, titular, monto, recibidaEn);
     }
 
     public void iniciarProcesamiento(Instant ahora) {
@@ -51,17 +64,23 @@ public class Transaccion {
     }
 
     /**
-     * Ejecuta el movimiento contable. La transición se valida antes de tocar los saldos
-     * para no dejar cuentas modificadas si la transacción no está en un estado válido.
+     * Aplica el movimiento contable. La transición se valida antes de tocar los saldos
+     * para no dejar cuentas modificadas si el movimiento no está en un estado válido.
      */
-    public void ejecutarTransferencia(CuentaBancaria cuentaOrigen, CuentaBancaria cuentaDestino, Instant ahora) {
-        exigirTitular(cuentaOrigen, origen);
-        exigirTitular(cuentaDestino, destino);
+    public void ejecutar(Optional<CuentaBancaria> cuentaOrigen, CuentaBancaria cuentaDestino, Instant ahora) {
+        exigirCuentasCorrectas(cuentaOrigen, cuentaDestino);
         EstadoTransaccion siguiente = estado.completar();
-        cuentaOrigen.debitar(monto);
-        cuentaDestino.acreditar(monto);
+        tipo.aplicar(monto, cuentaOrigen, cuentaDestino);
         estado = siguiente;
         actualizadaEn = ahora;
+    }
+
+    public void ejecutarTransferencia(CuentaBancaria cuentaOrigen, CuentaBancaria cuentaDestino, Instant ahora) {
+        ejecutar(Optional.of(cuentaOrigen), cuentaDestino, ahora);
+    }
+
+    public void ejecutarRecarga(CuentaBancaria cuentaDestino, Instant ahora) {
+        ejecutar(Optional.empty(), cuentaDestino, ahora);
     }
 
     public void rechazar(String motivoRechazo, Instant ahora) {
@@ -82,14 +101,36 @@ public class Transaccion {
         actualizadaEn = ahora;
     }
 
-    /** Proyecta el estado actual del agregado como evento inmutable del ledger. */
+    /** Proyecta el movimiento como evento del ledger, incluyendo los saldos resultantes. */
+    public TransactionEventRecord aEvento(Optional<MontoDinero> saldoOrigen, MontoDinero saldoDestino) {
+        return crearEvento(saldoOrigen.map(MontoDinero::valor).orElse(null),
+                Objects.requireNonNull(saldoDestino, "El saldo de destino es obligatorio").valor());
+    }
+
+    /** Proyecta el movimiento como evento del ledger sin información de saldos. */
     public TransactionEventRecord aEvento() {
-        return new TransactionEventRecord(id.valor(), origen, destino, monto.valor(), monto.divisa(),
-                estado.codigo(), motivo, actualizadaEn);
+        return crearEvento(null, null);
+    }
+
+    private TransactionEventRecord crearEvento(BigDecimal saldoOrigen, BigDecimal saldoDestino) {
+        return new TransactionEventRecord(id.valor(), tipo.name(), origen, destino, monto.valor(), monto.divisa(),
+                estado.codigo(), motivo, saldoOrigen, saldoDestino, actualizadaEn);
     }
 
     public TransactionId id() {
         return id;
+    }
+
+    public TipoMovimiento tipo() {
+        return tipo;
+    }
+
+    public Optional<String> origen() {
+        return Optional.ofNullable(origen);
+    }
+
+    public String destino() {
+        return destino;
     }
 
     public MontoDinero monto() {
@@ -104,9 +145,12 @@ public class Transaccion {
         return Optional.ofNullable(motivo);
     }
 
-    private static void exigirTitular(CuentaBancaria cuenta, String usuario) {
-        if (cuenta == null || !cuenta.perteneceA(usuario)) {
-            throw new IllegalArgumentException("La cuenta no corresponde al usuario " + usuario);
+    private void exigirCuentasCorrectas(Optional<CuentaBancaria> cuentaOrigen, CuentaBancaria cuentaDestino) {
+        boolean origenCorrecto = origen()
+                .map(usuario -> cuentaOrigen.filter(cuenta -> cuenta.perteneceA(usuario)).isPresent())
+                .orElse(cuentaOrigen.isEmpty());
+        if (!origenCorrecto || cuentaDestino == null || !cuentaDestino.perteneceA(destino)) {
+            throw new IllegalArgumentException("Las cuentas no corresponden a los usuarios del movimiento " + id.valor());
         }
     }
 

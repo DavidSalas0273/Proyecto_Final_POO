@@ -7,10 +7,11 @@ import java.util.Optional;
 
 /**
  * Patrón Strategy: cada regla de riesgo/validación es intercambiable.
- * Devuelve el motivo de rechazo o vacío si la transacción cumple la regla.
+ * Devuelve el motivo de rechazo o vacío si el movimiento cumple la regla.
+ * La cuenta de origen es opcional porque las recargas no tienen origen.
  */
 @FunctionalInterface
 public interface ReglaValidacionTransaccion {
 
-    Optional<String> evaluar(Transaccion transaccion, CuentaBancaria origen, CuentaBancaria destino);
+    Optional<String> evaluar(Transaccion transaccion, Optional<CuentaBancaria> origen, CuentaBancaria destino);
 }

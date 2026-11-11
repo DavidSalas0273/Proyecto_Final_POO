@@ -29,15 +29,15 @@ class EnrutadorNotificacionesTest {
     @InjectMocks
     private EnrutadorNotificaciones enrutador;
 
-    private static TransactionEventRecord evento(String estado) {
-        return new TransactionEventRecord("tx-1", "A", "B", new BigDecimal("50"), "USD", estado, null,
-                Instant.parse("2026-11-11T11:30:02Z"));
+    private static TransactionEventRecord evento(String estado, String motivo) {
+        return new TransactionEventRecord("tx-1", "A", "B", new BigDecimal("50"), "USD", estado, motivo,
+                Instant.parse("2026-11-11T11:30:02Z"), "TRANSFER", null, null);
     }
 
     @Test
     void eventoCompletadoPublicaDosComandosDeEmail() {
         // Act
-        enrutador.enrutar(evento("COMPLETED"));
+        enrutador.enrutar(evento("COMPLETED", null));
 
         // Assert
         verify(publicador, times(1)).publicar(new EmailCommandRecord("user_a@email.com", "Envió $50 a B"));
@@ -46,8 +46,15 @@ class EnrutadorNotificacionesTest {
     }
 
     @Test
-    void eventoRechazadoNoGeneraNotificaciones() {
-        enrutador.enrutar(evento("REJECTED"));
+    void eventoDenegadoPublicaUnAvisoAlEmisor() {
+        enrutador.enrutar(evento("REJECTED", "INSUFFICIENT_FUNDS"));
+
+        verify(publicador, times(1)).publicar(any());
+    }
+
+    @Test
+    void eventoSinPlantillaNoGeneraNotificaciones() {
+        enrutador.enrutar(evento("SUSPICIOUS", null));
 
         verifyNoInteractions(publicador);
     }

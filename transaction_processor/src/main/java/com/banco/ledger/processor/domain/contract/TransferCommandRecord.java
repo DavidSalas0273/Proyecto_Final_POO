@@ -1,18 +1,21 @@
 package com.banco.ledger.processor.domain.contract;
 
+import com.banco.ledger.processor.domain.model.MontoDinero;
+import com.banco.ledger.processor.domain.model.TransactionId;
+import com.banco.ledger.processor.domain.model.Transaccion;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Comando consumido desde la Work Queue transfer_commands (validación Fail-Fast). */
+/** Comando de transferencia P2P (validación Fail-Fast). */
 public record TransferCommandRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("from_user") String fromUser,
         @JsonProperty("to_user") String toUser,
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("currency") String currency,
-        @JsonProperty("requested_at") Instant requestedAt) {
+        @JsonProperty("requested_at") Instant requestedAt) implements ComandoLedger {
 
     public TransferCommandRecord {
         txId = requerirTexto(txId, "tx_id");
@@ -25,6 +28,12 @@ public record TransferCommandRecord(
         if (requestedAt == null) {
             throw new IllegalArgumentException("requested_at no puede ser nulo");
         }
+    }
+
+    @Override
+    public Transaccion crearTransaccion() {
+        return Transaccion.recibirTransferencia(new TransactionId(txId), fromUser, toUser,
+                new MontoDinero(amount, currency), requestedAt);
     }
 
     private static String requerirTexto(String valor, String campo) {

@@ -18,7 +18,7 @@ public class CadenaValidacion {
         this.reglas = List.copyOf(reglas);
     }
 
-    public Optional<String> primerMotivoDeRechazo(Transaccion transaccion, CuentaBancaria origen,
+    public Optional<String> primerMotivoDeRechazo(Transaccion transaccion, Optional<CuentaBancaria> origen,
                                                    CuentaBancaria destino) {
         return reglas.stream()
                 .map(regla -> regla.evaluar(transaccion, origen, destino))

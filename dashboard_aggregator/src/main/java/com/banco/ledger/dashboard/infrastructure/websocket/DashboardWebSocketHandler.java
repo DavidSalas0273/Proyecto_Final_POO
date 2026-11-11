@@ -15,7 +15,6 @@ import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorato
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,7 +43,7 @@ public class DashboardWebSocketHandler extends TextWebSocketHandler implements D
         WebSocketSession segura = new ConcurrentWebSocketSessionDecorator(session, TIEMPO_ENVIO_MS, BUFFER_BYTES);
         sesiones.put(session.getId(), segura);
         log.info("Cliente de dashboard conectado: {} (total {})", session.getId(), sesiones.size());
-        enviar(segura, serializar(new MensajeDashboard("SNAPSHOT", vista.instantanea(), null)));
+        enviar(segura, serializar(MensajeDashboard.instantanea(vista.instantanea(), vista.cuentas())));
     }
 
     @Override
@@ -54,7 +53,7 @@ public class DashboardWebSocketHandler extends TextWebSocketHandler implements D
 
     @Override
     public void difundir(TransaccionVista transaccion) {
-        String json = serializar(new MensajeDashboard("UPSERT", List.of(), transaccion));
+        String json = serializar(MensajeDashboard.actualizacion(transaccion, vista.cuentas()));
         sesiones.values().forEach(sesion -> enviar(sesion, json));
     }
 

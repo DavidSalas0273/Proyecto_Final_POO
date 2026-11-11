@@ -2,6 +2,7 @@ package com.banco.ledger.api.application;
 
 import com.banco.ledger.api.application.port.TransferCommandPublisher;
 import com.banco.ledger.api.application.port.TxIdGenerator;
+import com.banco.ledger.api.domain.DepositCommandRecord;
 import com.banco.ledger.api.domain.TransferCommandRecord;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +10,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 
 /**
- * Caso de uso: solicitar una transferencia P2P.
+ * Casos de uso de entrada: solicitar una transferencia P2P o una recarga de saldo.
  * Todas las dependencias se inyectan por constructor y son interfaces (DIP).
  */
 @Service
@@ -29,6 +30,13 @@ public class TransferService {
                                                         BigDecimal amount, String currency) {
         TransferCommandRecord comando = new TransferCommandRecord(
                 txIdGenerator.nuevoId(), fromUser, toUser, amount, currency, clock.instant());
+        publisher.publicar(comando);
+        return comando;
+    }
+
+    public DepositCommandRecord solicitarRecarga(String user, BigDecimal amount, String currency) {
+        DepositCommandRecord comando = new DepositCommandRecord(
+                txIdGenerator.nuevoId(), user, amount, currency, clock.instant());
         publisher.publicar(comando);
         return comando;
     }

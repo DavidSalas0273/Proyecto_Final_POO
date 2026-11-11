@@ -27,20 +27,51 @@ POST /transfer ──► transaction_api ──► [RabbitMQ: transfer_commands]
 
 | Servicio | Entrada | Salida | Puerto |
 |---|---|---|---|
-| `transaction_api` | `POST /transfer` | RabbitMQ `transfer_commands` | 8080 |
+| `transaction_api` | `POST /transfer` (enviar) y `POST /deposit` (recargar) | RabbitMQ `transfer_commands` | 8080 |
 | `transaction_processor` | RabbitMQ `transfer_commands` | PostgreSQL + Kafka `transactions_log` | — |
 | `fraud_detector` | Kafka `transactions_log` | PostgreSQL + Kafka `fraud_alerts` | — |
-| `dashboard_aggregator` | Kafka `transactions_log` y `fraud_alerts` | WebSocket `ws://localhost:8081/ws`, `GET /api/transactions` | 8081 |
+| `dashboard_aggregator` | Kafka `transactions_log` y `fraud_alerts` | WebSocket `ws://localhost:8081/ws`, `GET /api/transactions`, `GET /api/accounts` | 8081 |
 | `notification_router` | Kafka `transactions_log` | RabbitMQ `email_queue` | — |
 | `ad_generator` | Tarea programada (cada 30 s) | RabbitMQ `email_queue` | — |
 | `email_worker` (3 réplicas) | RabbitMQ `email_queue` | Consola: `ENVIANDO EMAIL a [to]: [body]` | — |
-| `dashboard/dashboard.html` | WebSocket del agregador | Navegador (sospechosas en rojo) | — |
+| `dashboard/dashboard.html` | WebSocket del agregador | Navegador: billetera, cuentas y movimientos (sospechosas en rojo) | — |
+
+## Saldos, recargas y envíos
+
+- Cada usuario tiene una cuenta con saldo. Las cuentas nuevas se abren en **$0** (`LEDGER_SALDO_INICIAL`).
+- **Recargar** (`POST /deposit`) suma el monto al saldo del usuario.
+- **Enviar** (`POST /transfer`) resta el monto al que envía y lo suma al que recibe.
+- Si el que envía no tiene saldo suficiente, el movimiento queda **DENEGADO** (`REJECTED`, motivo `INSUFFICIENT_FUNDS`):
+  - no se mueve dinero;
+  - el movimiento queda registrado en el ledger y en la lista de movimientos del dashboard;
+  - el emisor recibe un correo avisándole.
+- Las recargas y las transferencias viajan por la misma cola (`transfer_commands`), con un campo `type` (`DEPOSIT` o `TRANSFER`), para que se procesen en el orden en que se pidieron.
+- Cada evento del ledger lleva el saldo resultante de las cuentas involucradas (`from_balance` y `to_balance`). Con eso, el dashboard muestra los saldos en tiempo real sin consultar la base de datos.
+
+## Dashboard
+
+- **Mi billetera:** eliges el usuario activo y ves su saldo.
+  - Tiene dos pestañas, *Enviar* y *Recargar*, esta última con montos rápidos.
+  - Si el monto supera el saldo, avisa antes de enviar que el sistema lo denegará.
+- **Cuentas:** muestra el saldo de cada usuario. Al hacer clic en una cuenta, pasa a ser el usuario activo.
+- **Movimientos:**
+  - filtros (Todos, Envíos, Recargas, Denegados, Sospechosos), buscador y la opción "Solo los míos";
+  - los movimientos denegados se ven tachados y en naranja, con el motivo;
+  - los sospechosos se resaltan en rojo.
+- **Notificaciones emergentes:** confirman cuándo termina cada operación y avisan de las alertas de fraude.
+- **Escenarios de demostración:**
+  - transferencia sospechosa de $20.000, que primero recarga la cuenta de C;
+  - envío desde una cuenta sin saldo.
 
 ## Diseño orientado a objetos
 
 Cada servicio sigue una arquitectura hexagonal: `domain` (modelo y contratos), `application` (casos de uso y **puertos**) e `infrastructure` (adaptadores de RabbitMQ, Kafka, JPA, WebSocket y configuración).
 
-- **Modelo rico**: `Transaccion`, `CuentaBancaria` y `VistaMaterializada` encapsulan su estado y lo cambian solo con métodos semánticos (`debitar()`, `acreditar()`, `ejecutarTransferencia()`, `rechazarPorFondosInsuficientes()`, `marcarComoSospechosa()`). No tienen setters.
+- **Modelo rico**: `Transaccion`, `CuentaBancaria` y `VistaMaterializada` encapsulan su estado y lo cambian solo con métodos semánticos (`debitar()`, `acreditar()`, `ejecutarTransferencia()`, `ejecutarRecarga()`, `rechazarPorFondosInsuficientes()`, `marcarComoSospechosa()`). No tienen setters.
+- **Polimorfismo sin `switch`**:
+  - `TipoMovimiento` (`TRANSFER`/`DEPOSIT`) define en cada constante cómo se mueve el dinero.
+  - Cada comando (`TransferCommandRecord`, `DepositCommandRecord`) construye su propio agregado.
+  - Las plantillas de correo se eligen con una tabla de estrategias por `TIPO:ESTADO`.
 - **State**: `EstadoTransaccion` con `EstadoRecibida → EstadoProcesando → EstadoCompletada → EstadoSospechosa` y `EstadoProcesando → EstadoRechazada`. Cada estado solo sobrescribe las transiciones que permite; las demás lanzan `IllegalStateException`, así que no hay `if/else` ni `switch` sobre el estado.
 - **Strategy**:
   - Validación de transacciones (`transaction_processor`): `DivisaCompatibleRegla`, `LimitePorTransaccionRegla` y `FondosSuficientesRegla`, combinadas en `CadenaValidacion`.
@@ -57,17 +88,23 @@ Requisitos: Docker Desktop (con Docker Compose v2).
 docker compose up -d --build
 ```
 
-Envía una transferencia normal y otra sospechosa:
+Recarga saldo a A y luego envía $50 a B:
+
+```bash
+curl -X POST http://localhost:8080/deposit -H "Content-Type: application/json" -d '{"user":"A","amount":200}'
+```
 
 ```bash
 curl -X POST http://localhost:8080/transfer -H "Content-Type: application/json" -d '{"from_user":"A","to_user":"B","amount":50}'
 ```
 
+Intenta un envío sin saldo suficiente, que quedará denegado:
+
 ```bash
-curl -X POST http://localhost:8080/transfer -H "Content-Type: application/json" -d '{"from_user":"C","to_user":"D","amount":20000}'
+curl -X POST http://localhost:8080/transfer -H "Content-Type: application/json" -d '{"from_user":"B","to_user":"A","amount":500}'
 ```
 
-Abre `dashboard/dashboard.html` en el navegador. Tiene un formulario para enviar transferencias y un botón que simula una de $20,000, que aparece en rojo.
+Abre `dashboard/dashboard.html` en el navegador para operar desde la interfaz.
 
 Para ver el balanceo de carga entre las réplicas de `email_worker`:
 
@@ -78,13 +115,13 @@ docker compose logs -f email_worker
 Para consultar la auditoría en PostgreSQL:
 
 ```bash
-docker exec -it postgres-db psql -U ledger -d ledger -c "SELECT * FROM ledger_transacciones; SELECT * FROM alertas_fraude;"
+docker exec -it postgres-db psql -U ledger -d ledger -c "SELECT * FROM ledger_movimientos; SELECT * FROM cuentas_bancarias; SELECT * FROM alertas_fraude;"
 ```
 
 La consola de RabbitMQ está en http://localhost:15672 (usuario `ledger`, contraseña `ledger`).
 
 Notas:
-- Las cuentas nuevas se abren con un saldo inicial de 100,000 USD (`LEDGER_SALDO_INICIAL`), así que una transferencia mayor a ese saldo se rechaza con `INSUFFICIENT_FUNDS`.
+- Si vienes de una versión anterior del proyecto, reinicia los datos con `docker compose down -v`. Antes las cuentas empezaban con 100.000 y el ledger usaba otra tabla.
 - Cada vez que arranca, el `dashboard_aggregator` reconstruye su vista en memoria reproduciendo los topics de Kafka desde el inicio.
 
 ## Desarrollo desde IntelliJ IDEA (Run / Debug)

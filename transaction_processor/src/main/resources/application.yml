@@ -37,7 +37,8 @@ ledger:
   kafka:
     transactions-topic: transactions_log
   cuentas:
-    saldo-inicial: ${LEDGER_SALDO_INICIAL:100000}
+    # Las cuentas nuevas empiezan sin saldo: el usuario debe recargar antes de enviar
+    saldo-inicial: ${LEDGER_SALDO_INICIAL:0}
     divisa-base: USD
   reglas:
     limite-por-transaccion: ${LEDGER_LIMITE_TRANSACCION:1000000}

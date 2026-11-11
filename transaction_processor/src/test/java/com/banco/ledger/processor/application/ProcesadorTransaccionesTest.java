@@ -3,6 +3,7 @@ package com.banco.ledger.processor.application;
 import com.banco.ledger.processor.application.port.CuentaRepository;
 import com.banco.ledger.processor.application.port.PublicadorEventosLedger;
 import com.banco.ledger.processor.application.port.TransaccionRepository;
+import com.banco.ledger.processor.domain.contract.DepositCommandRecord;
 import com.banco.ledger.processor.domain.contract.TransactionEventRecord;
 import com.banco.ledger.processor.domain.contract.TransferCommandRecord;
 import com.banco.ledger.processor.domain.model.CuentaBancaria;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.when;
 class ProcesadorTransaccionesTest {
 
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:01Z");
+    private static final Instant SOLICITADA = Instant.parse("2026-11-11T11:30:00Z");
 
     @Mock
     private TransaccionRepository transacciones;
@@ -51,18 +53,23 @@ class ProcesadorTransaccionesTest {
     void setUp() {
         CadenaValidacion validaciones = new CadenaValidacion(
                 List.of(new DivisaCompatibleRegla(), new FondosSuficientesRegla()));
-        PoliticaAperturaCuentas politica = new PoliticaAperturaCuentas(MontoDinero.de("100", "USD"));
+        PoliticaAperturaCuentas politica = new PoliticaAperturaCuentas(MontoDinero.cero("USD"));
         procesador = new ProcesadorTransacciones(transacciones, cuentas, publicador, validaciones, politica,
                 Clock.fixed(AHORA, ZoneOffset.UTC));
     }
 
-    private static TransferCommandRecord comando(String monto) {
-        return new TransferCommandRecord("tx-1", "A", "B", new BigDecimal(monto), "USD",
-                Instant.parse("2026-11-11T11:30:00Z"));
+    private static TransferCommandRecord transferencia(String monto) {
+        return new TransferCommandRecord("tx-1", "A", "B", new BigDecimal(monto), "USD", SOLICITADA);
+    }
+
+    private TransactionEventRecord eventoPublicado() {
+        ArgumentCaptor<TransactionEventRecord> evento = ArgumentCaptor.forClass(TransactionEventRecord.class);
+        verify(publicador, times(1)).publicar(evento.capture());
+        return evento.getValue();
     }
 
     @Test
-    void comandoValidoPersisteUnaVezYPublicaUnEventoCompleted() {
+    void transferenciaConSaldoPersisteUnaVezYPublicaEventoCompletedConSaldos() {
         // Arrange
         when(transacciones.existe(any())).thenReturn(false);
         when(cuentas.buscarPorTitular("A")).thenReturn(Optional.of(
@@ -70,38 +77,60 @@ class ProcesadorTransaccionesTest {
         when(cuentas.buscarPorTitular("B")).thenReturn(Optional.empty());
 
         // Act
-        Optional<TransactionEventRecord> resultado = procesador.procesar(comando("50"));
+        Optional<TransactionEventRecord> resultado = procesador.procesar(transferencia("50"));
 
         // Assert
-        verify(transacciones, times(1)).guardar(any(Transaccion.class));
-        ArgumentCaptor<TransactionEventRecord> evento = ArgumentCaptor.forClass(TransactionEventRecord.class);
-        verify(publicador, times(1)).publicar(evento.capture());
-        assertThat(evento.getValue().status()).isEqualTo("COMPLETED");
-        assertThat(evento.getValue().txId()).isEqualTo("tx-1");
-        assertThat(resultado).contains(evento.getValue());
+        verify(transacciones, times(1)).guardar(any(TransactionEventRecord.class));
+        TransactionEventRecord evento = eventoPublicado();
+        assertThat(evento.status()).isEqualTo("COMPLETED");
+        assertThat(evento.type()).isEqualTo("TRANSFER");
+        assertThat(evento.fromBalance()).isEqualByComparingTo("950");
+        assertThat(evento.toBalance()).isEqualByComparingTo("50");
+        assertThat(resultado).contains(evento);
 
         ArgumentCaptor<CuentaBancaria> cuentasGuardadas = ArgumentCaptor.forClass(CuentaBancaria.class);
         verify(cuentas, times(2)).guardar(cuentasGuardadas.capture());
         assertThat(cuentasGuardadas.getAllValues())
                 .extracting(c -> c.saldo().valor())
-                .containsExactly(new BigDecimal("950.00"), new BigDecimal("150.00"));
+                .containsExactly(new BigDecimal("950.00"), new BigDecimal("50.00"));
     }
 
     @Test
-    void sinFondosPublicaEventoRejectedConMotivo() {
-        // Arrange
+    void transferenciaSinSaldoSeDeniegaYNoMueveDinero() {
+        // Arrange: cuentas nuevas empiezan en 0
         when(transacciones.existe(any())).thenReturn(false);
         when(cuentas.buscarPorTitular(any())).thenReturn(Optional.empty());
 
         // Act
-        procesador.procesar(comando("500"));
+        procesador.procesar(transferencia("500"));
 
         // Assert
-        ArgumentCaptor<TransactionEventRecord> evento = ArgumentCaptor.forClass(TransactionEventRecord.class);
-        verify(transacciones, times(1)).guardar(any(Transaccion.class));
-        verify(publicador, times(1)).publicar(evento.capture());
-        assertThat(evento.getValue().status()).isEqualTo("REJECTED");
-        assertThat(evento.getValue().reason()).isEqualTo(Transaccion.MOTIVO_FONDOS_INSUFICIENTES);
+        verify(transacciones, times(1)).guardar(any(TransactionEventRecord.class));
+        TransactionEventRecord evento = eventoPublicado();
+        assertThat(evento.status()).isEqualTo("REJECTED");
+        assertThat(evento.reason()).isEqualTo(Transaccion.MOTIVO_FONDOS_INSUFICIENTES);
+        assertThat(evento.fromBalance()).isEqualByComparingTo("0");
+        assertThat(evento.toBalance()).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void recargaSumaAlSaldoDelTitular() {
+        // Arrange
+        when(transacciones.existe(any())).thenReturn(false);
+        when(cuentas.buscarPorTitular("A")).thenReturn(Optional.of(
+                CuentaBancaria.reconstituir("A", MontoDinero.de("20", "USD"))));
+
+        // Act
+        procesador.procesar(new DepositCommandRecord("tx-r", "A", new BigDecimal("80"), "USD", SOLICITADA));
+
+        // Assert
+        TransactionEventRecord evento = eventoPublicado();
+        assertThat(evento.type()).isEqualTo("DEPOSIT");
+        assertThat(evento.status()).isEqualTo("COMPLETED");
+        assertThat(evento.fromUser()).isNull();
+        assertThat(evento.toBalance()).isEqualByComparingTo("100");
+        verify(cuentas, times(1)).guardar(any(CuentaBancaria.class));
+        verify(transacciones, times(1)).guardar(any(TransactionEventRecord.class));
     }
 
     @Test
@@ -110,7 +139,7 @@ class ProcesadorTransaccionesTest {
         when(transacciones.existe(any())).thenReturn(true);
 
         // Act
-        Optional<TransactionEventRecord> resultado = procesador.procesar(comando("50"));
+        Optional<TransactionEventRecord> resultado = procesador.procesar(transferencia("50"));
 
         // Assert
         assertThat(resultado).isEmpty();

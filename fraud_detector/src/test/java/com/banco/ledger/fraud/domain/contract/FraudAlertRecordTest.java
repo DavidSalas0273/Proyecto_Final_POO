@@ -15,7 +15,7 @@ class FraudAlertRecordTest {
     @Test
     void seConstruyeDesdeElEvento() {
         TransactionEventRecord evento = new TransactionEventRecord("tx-9", "A", "B", new BigDecimal("20000"),
-                "USD", "COMPLETED", null, AHORA);
+                "USD", "COMPLETED", null, AHORA, "TRANSFER");
 
         FraudAlertRecord alerta = FraudAlertRecord.de(evento, "HIGH_VALUE_TRANSACTION", AHORA);
 
@@ -37,6 +37,6 @@ class FraudAlertRecordTest {
     @Test
     void eventoRechazaMontoNoPositivo() {
         assertThatThrownBy(() -> new TransactionEventRecord("tx", "A", "B", BigDecimal.ZERO, "USD",
-                "COMPLETED", null, AHORA)).isInstanceOf(IllegalArgumentException.class);
+                "COMPLETED", null, AHORA, "TRANSFER")).isInstanceOf(IllegalArgumentException.class);
     }
 }

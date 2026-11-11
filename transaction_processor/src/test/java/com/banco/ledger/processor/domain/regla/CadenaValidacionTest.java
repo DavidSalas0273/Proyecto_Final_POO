@@ -9,22 +9,29 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CadenaValidacionTest {
+
+    private static final Instant T0 = Instant.parse("2026-11-11T11:30:00Z");
 
     private final CadenaValidacion cadena = new CadenaValidacion(List.of(
             new DivisaCompatibleRegla(),
             new LimitePorTransaccionRegla(new BigDecimal("1000")),
             new FondosSuficientesRegla()));
 
-    private final CuentaBancaria origen = CuentaBancaria.abrir("A", MontoDinero.de("500", "USD"));
+    private final Optional<CuentaBancaria> origen =
+            Optional.of(CuentaBancaria.abrir("A", MontoDinero.de("500", "USD")));
     private final CuentaBancaria destino = CuentaBancaria.abrir("B", MontoDinero.cero("USD"));
 
     private static Transaccion tx(String monto, String divisa) {
-        return Transaccion.recibir(new TransactionId("tx"), "A", "B", MontoDinero.de(monto, divisa),
-                Instant.parse("2026-11-11T11:30:00Z"));
+        return Transaccion.recibirTransferencia(new TransactionId("tx"), "A", "B", MontoDinero.de(monto, divisa), T0);
+    }
+
+    private static Transaccion recarga(String monto, String divisa) {
+        return Transaccion.recibirRecarga(new TransactionId("tx-r"), "B", MontoDinero.de(monto, divisa), T0);
     }
 
     @Test
@@ -48,5 +55,18 @@ class CadenaValidacionTest {
     void detectaDivisaIncompatibleSinEvaluarReglasPosteriores() {
         assertThat(cadena.primerMotivoDeRechazo(tx("10", "EUR"), origen, destino))
                 .contains(DivisaCompatibleRegla.MOTIVO);
+    }
+
+    @Test
+    void recargaNuncaSeDeniegaPorFondos() {
+        assertThat(cadena.primerMotivoDeRechazo(recarga("900", "USD"), Optional.empty(), destino)).isEmpty();
+    }
+
+    @Test
+    void recargaRespetaDivisaYLimite() {
+        assertThat(cadena.primerMotivoDeRechazo(recarga("10", "EUR"), Optional.empty(), destino))
+                .contains(DivisaCompatibleRegla.MOTIVO);
+        assertThat(cadena.primerMotivoDeRechazo(recarga("2000", "USD"), Optional.empty(), destino))
+                .contains(LimitePorTransaccionRegla.MOTIVO);
     }
 }

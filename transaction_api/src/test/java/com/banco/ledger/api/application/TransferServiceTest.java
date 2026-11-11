@@ -2,6 +2,7 @@ package com.banco.ledger.api.application;
 
 import com.banco.ledger.api.application.port.TransferCommandPublisher;
 import com.banco.ledger.api.application.port.TxIdGenerator;
+import com.banco.ledger.api.domain.DepositCommandRecord;
 import com.banco.ledger.api.domain.TransferCommandRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,20 @@ class TransferServiceTest {
         assertThat(captor.getValue()).isEqualTo(resultado);
         assertThat(resultado.txId()).isEqualTo("tx-123");
         assertThat(resultado.requestedAt()).isEqualTo(AHORA);
+    }
+
+    @Test
+    void recargaPublicaExactamenteUnComandoDeposit() {
+        // Arrange
+        when(txIdGenerator.nuevoId()).thenReturn("tx-r");
+
+        // Act
+        DepositCommandRecord recarga = service.solicitarRecarga("A", new BigDecimal("100"), "USD");
+
+        // Assert
+        verify(publisher, times(1)).publicar(recarga);
+        assertThat(recarga.toUser()).isEqualTo("A");
+        assertThat(recarga.txId()).isEqualTo("tx-r");
     }
 
     @Test

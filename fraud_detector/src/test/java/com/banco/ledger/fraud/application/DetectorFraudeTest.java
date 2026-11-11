@@ -50,8 +50,12 @@ class DetectorFraudeTest {
     }
 
     private static TransactionEventRecord evento(String monto, String estado) {
+        return evento(monto, estado, "TRANSFER");
+    }
+
+    private static TransactionEventRecord evento(String monto, String estado, String tipo) {
         return new TransactionEventRecord("tx-1", "A", "B", new BigDecimal(monto), "USD", estado, null,
-                Instant.parse("2026-11-11T11:31:02Z"));
+                Instant.parse("2026-11-11T11:31:02Z"), tipo);
     }
 
     @Test
@@ -66,6 +70,16 @@ class DetectorFraudeTest {
         verify(publicador, times(1)).publicar(captor.getValue());
         assertThat(captor.getValue().reason()).isEqualTo(TransaccionAltoValorRegla.MOTIVO);
         assertThat(captor.getValue().detectedAt()).isEqualTo(AHORA);
+    }
+
+    @Test
+    void recargasNoSeAnalizanComoFraude() {
+        Optional<FraudAlertRecord> alerta = detector.analizar(new TransactionEventRecord("tx-r", null, "A",
+                new BigDecimal("50000"), "USD", "COMPLETED", null, Instant.parse("2026-11-11T11:31:02Z"),
+                "DEPOSIT"));
+
+        assertThat(alerta).isEmpty();
+        verifyNoInteractions(repositorio, publicador);
     }
 
     @Test

@@ -18,7 +18,7 @@ public record TransferCommandRecord(
         @JsonProperty("to_user") String toUser,
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("currency") String currency,
-        @JsonProperty("requested_at") Instant requestedAt) {
+        @JsonProperty("requested_at") Instant requestedAt) implements ComandoLedger {
 
     public static final Set<String> DIVISAS_ADMITIDAS = Set.of("USD", "EUR", "COP");
 

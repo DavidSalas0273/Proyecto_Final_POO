@@ -3,20 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ledger P2P - Dashboard</title>
+    <title>Ledger P2P</title>
     <style>
         :root {
-            --bg: #f4f6fa;
+            --bg: #f3f5f9;
             --panel: #ffffff;
-            --text: #1d2433;
-            --muted: #6b7385;
-            --border: #e2e6ee;
-            --accent: #2457d6;
-            --ok: #1f8a4c;
-            --ok-bg: #e6f5ec;
-            --danger: #c62828;
-            --danger-bg: #fde8e8;
-            --neutral-bg: #eef0f4;
+            --panel-2: #f8f9fc;
+            --text: #172033;
+            --muted: #667085;
+            --border: #e4e7ee;
+            --accent: #2f5bea;
+            --accent-soft: #e8eefe;
+            --ok: #12805c;
+            --ok-soft: #e3f5ee;
+            --warn: #b54708;
+            --warn-soft: #fef0e1;
+            --danger: #c81e1e;
+            --danger-soft: #fdeaea;
+            --shadow: 0 1px 2px rgba(16, 24, 40, .05), 0 4px 16px rgba(16, 24, 40, .04);
+            --radius: 14px;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0f1420;
+                --panel: #171e2c;
+                --panel-2: #1d2535;
+                --text: #e6eaf2;
+                --muted: #98a2b3;
+                --border: #2a3345;
+                --accent: #6d8dff;
+                --accent-soft: #24304d;
+                --ok: #4ccf9a;
+                --ok-soft: #173329;
+                --warn: #f5a35c;
+                --warn-soft: #3a2a1a;
+                --danger: #ff6b6b;
+                --danger-soft: #3d1d22;
+                --shadow: none;
+            }
         }
         * { box-sizing: border-box; }
         body {
@@ -24,266 +48,664 @@
             font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
+            font-size: 14px;
         }
+        button, input, select { font: inherit; color: inherit; }
+        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+        /* ---------- Encabezado ---------- */
         header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
-            padding: 18px 24px;
+            padding: 14px 24px;
             background: var(--panel);
             border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 5;
         }
-        header h1 { margin: 0; font-size: 20px; }
-        header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
-        .status { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
-        .dot.on { background: var(--ok); }
-        main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 20px; }
-        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .logo {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--accent); color: #fff;
+            display: grid; place-items: center; font-weight: 700;
+        }
+        .brand h1 { margin: 0; font-size: 17px; }
+        .brand p { margin: 0; color: var(--muted); font-size: 12px; }
+        .conexion {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 12px; border-radius: 999px;
+            background: var(--danger-soft); color: var(--danger); font-size: 13px; font-weight: 600;
+        }
+        .conexion .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+        .conexion.on { background: var(--ok-soft); color: var(--ok); }
+
+        /* ---------- Layout ---------- */
+        main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            display: grid;
+            grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+            gap: 20px;
+            align-items: start;
+        }
+        .col { display: grid; gap: 20px; min-width: 0; }
+        @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+
         .card {
             background: var(--panel);
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 14px 16px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            min-width: 0;
         }
-        .card span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-        .card strong { font-size: 26px; font-variant-numeric: tabular-nums; }
-        .card.alert strong { color: var(--danger); }
-        form.panel {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 16px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
-        label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+        .card h2 { margin: 0 0 14px; font-size: 15px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .card h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+        /* ---------- Billetera ---------- */
+        .campo { display: grid; gap: 6px; margin-bottom: 12px; }
+        .campo > span { font-size: 12px; font-weight: 600; color: var(--muted); }
         input, select {
-            padding: 8px 10px;
+            width: 100%;
+            padding: 10px 12px;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 14px;
-            min-width: 110px;
+            border-radius: 10px;
+            background: var(--panel);
+            outline: none;
         }
-        button {
-            padding: 9px 16px;
-            border: 0;
-            border-radius: 6px;
-            background: var(--accent);
+        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+        .saldo {
+            margin: 4px 0 16px;
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), #6a4ee8);
             color: #fff;
-            font-weight: 600;
-            cursor: pointer;
         }
-        button.secondary { background: var(--danger); }
-        #feedback { font-size: 13px; color: var(--muted); flex-basis: 100%; min-height: 18px; }
-        .table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; }
-        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-        th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: #fafbfd; }
-        td.amount { text-align: right; font-variant-numeric: tabular-nums; }
-        td.id { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); }
-        tr.suspicious td { background: var(--danger-bg); color: var(--danger); font-weight: 600; }
-        tr.rejected td { color: var(--muted); }
-        tr.flash td { animation: flash 1.2s ease-out; }
-        @keyframes flash { from { background: #fff7c2; } }
-        .badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-            background: var(--neutral-bg);
+        .saldo span { font-size: 12px; opacity: .85; }
+        .saldo strong { display: block; font-size: 30px; margin: 2px 0; font-variant-numeric: tabular-nums; }
+        .saldo small { opacity: .85; font-size: 12px; }
+
+        .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; background: var(--panel-2); border-radius: 10px; margin-bottom: 14px; }
+        .tabs button {
+            border: 0; background: transparent; padding: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; color: var(--muted);
         }
-        .badge.COMPLETED { background: var(--ok-bg); color: var(--ok); }
-        .badge.REJECTED { background: var(--neutral-bg); color: var(--muted); }
-        .badge.fraud { background: var(--danger); color: #fff; margin-left: 6px; }
-        .empty { padding: 30px; text-align: center; color: var(--muted); }
+        .tabs button[aria-selected="true"] { background: var(--panel); color: var(--text); box-shadow: var(--shadow); }
+        .fila { display: grid; grid-template-columns: 1fr 110px; gap: 10px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 12px; }
+        .chips button {
+            border: 1px solid var(--border); background: var(--panel-2); border-radius: 999px;
+            padding: 4px 10px; cursor: pointer; font-size: 12px;
+        }
+        .chips button:hover { border-color: var(--accent); color: var(--accent); }
+        .aviso {
+            margin: 0 0 12px; padding: 8px 10px; border-radius: 8px;
+            background: var(--warn-soft); color: var(--warn); font-size: 12px;
+        }
+        .btn {
+            width: 100%; border: 0; border-radius: 10px; padding: 11px 14px;
+            font-weight: 700; cursor: pointer; color: #fff; background: var(--accent);
+        }
+        .btn.verde { background: var(--ok); }
+        .btn.secundario { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); font-weight: 600; text-align: left; }
+        .btn:disabled { opacity: .6; cursor: progress; }
+
+        details.card summary { cursor: pointer; font-weight: 600; }
+        details.card .demos { display: grid; gap: 8px; margin-top: 12px; }
+        details.card .demos small { display: block; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+        /* ---------- Indicadores ---------- */
+        .kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+        @media (max-width: 560px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        .kpi { padding: 14px 16px; }
+        .kpi span { display: block; color: var(--muted); font-size: 12px; }
+        .kpi strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+        .kpi.ok strong { color: var(--ok); }
+        .kpi.warn strong { color: var(--warn); }
+        .kpi.danger strong { color: var(--danger); }
+
+        /* ---------- Cuentas ---------- */
+        .cuentas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .cuenta {
+            display: flex; align-items: center; gap: 10px; text-align: left;
+            padding: 10px 12px; border-radius: 12px; cursor: pointer;
+            border: 1px solid var(--border); background: var(--panel-2);
+        }
+        .cuenta:hover { border-color: var(--accent); }
+        .cuenta.activa { border-color: var(--accent); background: var(--accent-soft); }
+        .avatar {
+            flex: none; width: 32px; height: 32px; border-radius: 50%;
+            display: grid; place-items: center; font-weight: 700; font-size: 13px;
+            background: var(--accent-soft); color: var(--accent);
+        }
+        .cuenta div { min-width: 0; }
+        .cuenta b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cuenta small { color: var(--muted); font-variant-numeric: tabular-nums; }
+        .vacio { color: var(--muted); text-align: center; padding: 18px 8px; margin: 0; }
+
+        /* ---------- Movimientos ---------- */
+        .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+        .filtros { display: flex; flex-wrap: wrap; gap: 6px; }
+        .filtros button {
+            border: 1px solid var(--border); background: var(--panel); border-radius: 999px;
+            padding: 6px 12px; cursor: pointer; font-size: 13px;
+        }
+        .filtros button[aria-pressed="true"] { background: var(--text); color: var(--panel); border-color: var(--text); }
+        .buscar { flex: 1 1 180px; }
+        .solo-mios { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+        .solo-mios input { width: auto; }
+
+        ul.movs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+        .mov {
+            display: grid;
+            grid-template-columns: 40px minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--panel);
+        }
+        .mov .icono {
+            width: 40px; height: 40px; border-radius: 12px;
+            display: grid; place-items: center; font-size: 18px; font-weight: 700;
+            background: var(--accent-soft); color: var(--accent);
+        }
+        .mov.recarga .icono { background: var(--ok-soft); color: var(--ok); }
+        .mov.denegada .icono { background: var(--warn-soft); color: var(--warn); }
+        .mov .info { min-width: 0; }
+        .mov .info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .mov .info small { color: var(--muted); }
+        .mov .info .motivo { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; }
+        .mov.denegada .motivo { color: var(--warn); }
+        .mov .lado { text-align: right; display: grid; gap: 4px; justify-items: end; }
+        .monto { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .monto.mas { color: var(--ok); }
+        .monto.menos { color: var(--text); }
+        .mov.denegada .monto { color: var(--muted); text-decoration: line-through; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .badge.COMPLETED { background: var(--ok-soft); color: var(--ok); }
+        .badge.REJECTED { background: var(--warn-soft); color: var(--warn); }
+        .badge.SUSPICIOUS { background: var(--danger); color: #fff; }
+
+        /* Transacción sospechosa resaltada en rojo */
+        .mov.sospechosa { border-color: var(--danger); background: var(--danger-soft); }
+        .mov.sospechosa .icono { background: var(--danger); color: #fff; }
+        .mov.sospechosa .info b, .mov.sospechosa .motivo { color: var(--danger); }
+        .mov.nuevo { animation: entrar .9s ease-out; }
+        @keyframes entrar { from { transform: translateY(-4px); box-shadow: 0 0 0 3px var(--accent-soft); } }
+
+        /* ---------- Avisos emergentes ---------- */
+        #toasts { position: fixed; right: 16px; bottom: 16px; display: grid; gap: 8px; z-index: 20; max-width: min(360px, calc(100vw - 32px)); }
+        .toast {
+            padding: 12px 14px; border-radius: 12px; background: var(--text); color: var(--panel);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, .18); font-size: 13px; animation: entrar .3s ease-out;
+        }
+        .toast.ok { background: var(--ok); color: #fff; }
+        .toast.warn { background: var(--warn); color: #fff; }
+        .toast.danger { background: var(--danger); color: #fff; }
     </style>
 </head>
 <body>
 <header>
-    <div>
-        <h1>Ledger P2P &mdash; Transacciones en tiempo real</h1>
-        <p>Vista materializada de <code>transactions_log</code> + <code>fraud_alerts</code> (Kafka) v&iacute;a WebSocket</p>
+    <div class="brand">
+        <div class="logo" aria-hidden="true">L</div>
+        <div>
+            <h1>Ledger P2P</h1>
+            <p>Transferencias y recargas en tiempo real</p>
+        </div>
     </div>
-    <div class="status"><span id="dot" class="dot"></span><span id="status-text">Desconectado</span></div>
+    <span id="conexion" class="conexion" role="status"><span class="dot"></span><span id="conexion-texto">Desconectado</span></span>
 </header>
 
 <main>
-    <section class="cards">
-        <div class="card"><span>Transacciones</span><strong id="c-total">0</strong></div>
-        <div class="card"><span>Completadas</span><strong id="c-completed">0</strong></div>
-        <div class="card"><span>Rechazadas</span><strong id="c-rejected">0</strong></div>
-        <div class="card alert"><span>Sospechosas</span><strong id="c-suspicious">0</strong></div>
-    </section>
+    <!-- ================= Columna izquierda: operar ================= -->
+    <div class="col">
+        <section class="card" aria-labelledby="t-billetera">
+            <h2 id="t-billetera">Mi billetera</h2>
 
-    <form class="panel" id="transfer-form">
-        <label>Desde<input name="from_user" value="A" required></label>
-        <label>Hacia<input name="to_user" value="B" required></label>
-        <label>Monto<input name="amount" type="number" min="0.01" step="0.01" value="50" required></label>
-        <label>Divisa
-            <select name="currency">
-                <option>USD</option>
-                <option>EUR</option>
-                <option>COP</option>
-            </select>
-        </label>
-        <button type="submit">Enviar transferencia</button>
-        <button type="button" class="secondary" id="btn-fraud">Simular $20,000</button>
-        <div id="feedback"></div>
-    </form>
+            <label class="campo">
+                <span>Usuario activo</span>
+                <input id="usuario" list="lista-usuarios" value="A" autocomplete="off" required>
+            </label>
 
-    <div class="table-wrap">
-        <table>
-            <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>tx_id</th>
-                <th>Desde</th>
-                <th>Hacia</th>
-                <th style="text-align:right">Monto</th>
-                <th>Estado</th>
-                <th>Detalle</th>
-            </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-        </table>
-        <div class="empty" id="empty">Esperando transacciones&hellip;</div>
+            <div class="saldo">
+                <span>Saldo disponible</span>
+                <strong id="saldo-actual">$0,00</strong>
+                <small id="saldo-nota">Cuenta nueva: recarga para empezar a enviar</small>
+            </div>
+
+            <div class="tabs" role="tablist">
+                <button type="button" role="tab" id="tab-enviar" aria-selected="true" aria-controls="form-enviar">Enviar</button>
+                <button type="button" role="tab" id="tab-recargar" aria-selected="false" aria-controls="form-recargar">Recargar</button>
+            </div>
+
+            <form id="form-enviar" role="tabpanel" aria-labelledby="tab-enviar">
+                <label class="campo">
+                    <span>Para</span>
+                    <input name="to_user" list="lista-usuarios" placeholder="Ej. B" autocomplete="off" required>
+                </label>
+                <div class="fila">
+                    <label class="campo">
+                        <span>Monto</span>
+                        <input name="amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+                    </label>
+                    <label class="campo">
+                        <span>Divisa</span>
+                        <select name="currency"><option>USD</option><option>EUR</option><option>COP</option></select>
+                    </label>
+                </div>
+                <p id="aviso-saldo" class="aviso" hidden>El monto supera tu saldo: el sistema denegará este envío por fondos insuficientes.</p>
+                <button class="btn" type="submit">Enviar dinero</button>
+            </form>
+
+            <form id="form-recargar" role="tabpanel" aria-labelledby="tab-recargar" hidden>
+                <div class="fila">
+                    <label class="campo">
+                        <span>Monto a recargar</span>
+                        <input name="amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+                    </label>
+                    <label class="campo">
+                        <span>Divisa</span>
+                        <select name="currency"><option>USD</option><option>EUR</option><option>COP</option></select>
+                    </label>
+                </div>
+                <div class="chips" aria-label="Montos rápidos">
+                    <button type="button" data-monto="50">+50</button>
+                    <button type="button" data-monto="100">+100</button>
+                    <button type="button" data-monto="500">+500</button>
+                    <button type="button" data-monto="1000">+1.000</button>
+                    <button type="button" data-monto="10000">+10.000</button>
+                </div>
+                <button class="btn verde" type="submit">Recargar saldo</button>
+            </form>
+        </section>
+
+        <details class="card">
+            <summary>Escenarios de demostración</summary>
+            <div class="demos">
+                <button type="button" class="btn secundario" id="demo-fraude">
+                    Transferencia sospechosa ($20.000)
+                    <small>Recarga a C con $25.000 y envía $20.000 a D. Se marcará en rojo.</small>
+                </button>
+                <button type="button" class="btn secundario" id="demo-denegada">
+                    Envío sin saldo
+                    <small>Z, una cuenta sin saldo, intenta enviar $100 a A. Saldrá denegado.</small>
+                </button>
+            </div>
+        </details>
+    </div>
+
+    <!-- ================= Columna derecha: consultar ================= -->
+    <div class="col">
+        <section class="kpis" aria-label="Resumen">
+            <div class="card kpi"><span>Movimientos</span><strong id="k-total">0</strong></div>
+            <div class="card kpi ok"><span>Completados</span><strong id="k-ok">0</strong></div>
+            <div class="card kpi warn"><span>Denegados</span><strong id="k-den">0</strong></div>
+            <div class="card kpi danger"><span>Sospechosos</span><strong id="k-sos">0</strong></div>
+        </section>
+
+        <section class="card" aria-labelledby="t-cuentas">
+            <h2 id="t-cuentas">Cuentas <small>Haz clic en una cuenta para operar con ella</small></h2>
+            <div id="cuentas" class="cuentas"></div>
+            <p id="cuentas-vacio" class="vacio">Aún no hay cuentas. Haz una recarga para crear la primera.</p>
+        </section>
+
+        <section class="card" aria-labelledby="t-movs">
+            <h2 id="t-movs">Movimientos <small id="movs-contador"></small></h2>
+            <div class="toolbar">
+                <div class="filtros" role="group" aria-label="Filtrar movimientos">
+                    <button type="button" data-filtro="todos" aria-pressed="true">Todos</button>
+                    <button type="button" data-filtro="envios" aria-pressed="false">Envíos</button>
+                    <button type="button" data-filtro="recargas" aria-pressed="false">Recargas</button>
+                    <button type="button" data-filtro="denegados" aria-pressed="false">Denegados</button>
+                    <button type="button" data-filtro="sospechosos" aria-pressed="false">Sospechosos</button>
+                </div>
+                <label class="buscar"><span class="sr-only">Buscar</span>
+                    <input id="buscar" type="search" placeholder="Buscar por usuario o tx_id">
+                </label>
+                <label class="solo-mios"><input id="solo-mios" type="checkbox"> Solo los míos</label>
+            </div>
+            <ul id="movs" class="movs"></ul>
+            <p id="movs-vacio" class="vacio">Esperando movimientos…</p>
+        </section>
     </div>
 </main>
 
+<datalist id="lista-usuarios"></datalist>
+<div id="toasts" aria-live="polite"></div>
+
 <script>
     const WS_URL = "ws://localhost:8081/ws";
-    const API_URL = "http://localhost:8080/transfer";
+    const API = "http://localhost:8080";
 
-    const transacciones = new Map();
-    const rows = document.getElementById("rows");
+    const MOTIVOS = {
+        INSUFFICIENT_FUNDS: "Fondos insuficientes",
+        CURRENCY_MISMATCH: "La divisa no coincide con la de la cuenta",
+        AMOUNT_LIMIT_EXCEEDED: "Supera el límite por operación",
+        HIGH_VALUE_TRANSACTION: "Monto inusualmente alto",
+        ANOMALOUS_FREQUENCY: "Demasiadas operaciones seguidas"
+    };
 
-    function formatearMonto(t) {
-        const valor = Number(t.amount).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return valor + " " + (t.currency || "");
+    const estado = {
+        movimientos: new Map(),
+        cuentas: new Map(),
+        pendientes: new Map(),
+        filtro: "todos",
+        busqueda: "",
+        soloMios: false,
+        usuario: leerPreferencia("ledger.usuario") || "A"
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    // ---------- Utilidades ----------
+    function leerPreferencia(clave) {
+        try { return localStorage.getItem(clave); } catch (e) { return null; }
     }
-
-    function formatearFecha(iso) {
+    function guardarPreferencia(clave, valor) {
+        try { localStorage.setItem(clave, valor); } catch (e) { /* almacenamiento no disponible */ }
+    }
+    function dinero(valor, divisa) {
+        try {
+            return new Intl.NumberFormat("es-CO", { style: "currency", currency: divisa || "USD", minimumFractionDigits: 2 })
+                .format(Number(valor || 0));
+        } catch (e) {
+            return (divisa || "") + " " + Number(valor || 0).toFixed(2);
+        }
+    }
+    function hora(iso) {
         return iso ? new Date(iso).toLocaleTimeString("es-CO") : "";
     }
+    function mismoUsuario(a, b) {
+        return (a || "").trim().toLowerCase() === (b || "").trim().toLowerCase();
+    }
+    function el(tag, clase, texto) {
+        const nodo = document.createElement(tag);
+        if (clase) nodo.className = clase;
+        if (texto !== undefined) nodo.textContent = texto;
+        return nodo;
+    }
+    function toast(texto, tipo) {
+        const t = el("div", "toast " + (tipo || ""), texto);
+        $("toasts").append(t);
+        setTimeout(() => t.remove(), 5000);
+    }
+    function esDenegado(m) { return m.status === "REJECTED"; }
+    function esRecarga(m) { return m.type === "DEPOSIT"; }
 
-    function crearCelda(texto, clase) {
-        const td = document.createElement("td");
-        td.textContent = texto;
-        if (clase) td.className = clase;
-        return td;
+    // ---------- Billetera ----------
+    function cuentaActiva() {
+        return [...estado.cuentas.values()].find(c => mismoUsuario(c.user, estado.usuario));
     }
 
-    function crearFila(t) {
-        const tr = document.createElement("tr");
-        tr.dataset.txId = t.tx_id;
-        if (t.suspicious) tr.classList.add("suspicious");
-        if (t.status === "REJECTED") tr.classList.add("rejected");
+    function pintarSaldo() {
+        const cuenta = cuentaActiva();
+        $("saldo-actual").textContent = dinero(cuenta ? cuenta.balance : 0, cuenta ? cuenta.currency : "USD");
+        $("saldo-nota").textContent = cuenta
+            ? "Cuenta de " + cuenta.user + " · actualizado " + hora(cuenta.updated_at)
+            : "Cuenta nueva: recarga para empezar a enviar";
+        validarMontoEnvio();
+    }
 
-        tr.append(
-            crearCelda(formatearFecha(t.timestamp)),
-            crearCelda(t.tx_id, "id"),
-            crearCelda(t.from_user),
-            crearCelda(t.to_user),
-            crearCelda(formatearMonto(t), "amount")
-        );
+    function validarMontoEnvio() {
+        const monto = Number($("form-enviar").amount.value || 0);
+        const cuenta = cuentaActiva();
+        const saldo = cuenta ? Number(cuenta.balance) : 0;
+        $("aviso-saldo").hidden = !(monto > 0 && monto > saldo);
+    }
 
-        const estado = document.createElement("td");
-        const badge = document.createElement("span");
-        badge.className = "badge " + t.status;
-        badge.textContent = t.status;
-        estado.append(badge);
-        if (t.suspicious) {
-            const fraude = document.createElement("span");
-            fraude.className = "badge fraud";
-            fraude.textContent = "SOSPECHOSA";
-            estado.append(fraude);
+    function seleccionarUsuario(usuario) {
+        estado.usuario = usuario.trim();
+        $("usuario").value = estado.usuario;
+        guardarPreferencia("ledger.usuario", estado.usuario);
+        pintarSaldo();
+        pintarCuentas();
+        pintarMovimientos();
+    }
+
+    function cambiarPestana(cual) {
+        const enviar = cual === "enviar";
+        $("tab-enviar").setAttribute("aria-selected", String(enviar));
+        $("tab-recargar").setAttribute("aria-selected", String(!enviar));
+        $("form-enviar").hidden = !enviar;
+        $("form-recargar").hidden = enviar;
+    }
+
+    // ---------- Cuentas ----------
+    function pintarCuentas() {
+        const contenedor = $("cuentas");
+        contenedor.replaceChildren();
+        const lista = [...estado.cuentas.values()];
+        $("cuentas-vacio").hidden = lista.length > 0;
+
+        lista.forEach(c => {
+            const tarjeta = el("button", "cuenta" + (mismoUsuario(c.user, estado.usuario) ? " activa" : ""));
+            tarjeta.type = "button";
+            tarjeta.title = "Operar como " + c.user;
+            tarjeta.append(el("span", "avatar", c.user.slice(0, 2).toUpperCase()));
+            const info = el("div");
+            info.append(el("b", "", c.user), el("small", "", dinero(c.balance, c.currency)));
+            tarjeta.append(info);
+            tarjeta.addEventListener("click", () => seleccionarUsuario(c.user));
+            contenedor.append(tarjeta);
+        });
+
+        const datalist = $("lista-usuarios");
+        datalist.replaceChildren(...lista.map(c => { const o = el("option"); o.value = c.user; return o; }));
+    }
+
+    function aplicarCuentas(cuentas) {
+        if (!Array.isArray(cuentas)) return;
+        estado.cuentas.clear();
+        cuentas.forEach(c => estado.cuentas.set(c.user.toLowerCase(), c));
+        pintarCuentas();
+        pintarSaldo();
+    }
+
+    // ---------- Movimientos ----------
+    function pasaFiltros(m) {
+        const filtros = {
+            todos: () => true,
+            envios: () => !esRecarga(m),
+            recargas: () => esRecarga(m),
+            denegados: () => esDenegado(m),
+            sospechosos: () => m.suspicious
+        };
+        const texto = estado.busqueda;
+        const coincideTexto = !texto || [m.from_user, m.to_user, m.tx_id].some(v => (v || "").toLowerCase().includes(texto));
+        const mio = !estado.soloMios || mismoUsuario(m.from_user, estado.usuario) || mismoUsuario(m.to_user, estado.usuario);
+        return filtros[estado.filtro]() && coincideTexto && mio;
+    }
+
+    function describir(m) {
+        if (esRecarga(m)) {
+            return { icono: "+", titulo: "Recarga · " + m.to_user, signo: "mas" };
         }
-        tr.append(estado);
-        tr.append(crearCelda(t.fraud_reason || t.reason || ""));
-        return tr;
+        const envia = mismoUsuario(m.from_user, estado.usuario);
+        const recibe = mismoUsuario(m.to_user, estado.usuario);
+        const titulos = esDenegado(m)
+            ? { envia: "Intentaste enviar a " + m.to_user, recibe: m.from_user + " intentó enviarte" }
+            : { envia: "Enviaste a " + m.to_user, recibe: "Recibiste de " + m.from_user };
+        const titulo = envia ? titulos.envia
+            : recibe ? titulos.recibe
+            : m.from_user + " → " + m.to_user;
+        return { icono: recibe ? "↙" : "↗", titulo, signo: recibe ? "mas" : "menos" };
     }
 
-    function actualizarContadores() {
-        const lista = [...transacciones.values()];
-        document.getElementById("c-total").textContent = lista.length;
-        document.getElementById("c-completed").textContent = lista.filter(t => t.status === "COMPLETED").length;
-        document.getElementById("c-rejected").textContent = lista.filter(t => t.status === "REJECTED").length;
-        document.getElementById("c-suspicious").textContent = lista.filter(t => t.suspicious).length;
-        document.getElementById("empty").style.display = lista.length ? "none" : "block";
+    function crearFila(m, nuevo) {
+        const d = describir(m);
+        const clases = ["mov"];
+        if (esRecarga(m)) clases.push("recarga");
+        if (esDenegado(m)) clases.push("denegada");
+        if (m.suspicious) clases.push("sospechosa");
+        if (nuevo) clases.push("nuevo");
+
+        const li = el("li", clases.join(" "));
+        li.dataset.txId = m.tx_id;
+        li.append(el("div", "icono", m.suspicious ? "!" : d.icono));
+
+        const info = el("div", "info");
+        info.append(el("b", "", d.titulo));
+        info.append(el("small", "", hora(m.timestamp) + " · #" + m.tx_id.slice(0, 8)));
+        const motivo = m.suspicious ? "Sospechosa: " + (MOTIVOS[m.fraud_reason] || m.fraud_reason)
+            : esDenegado(m) ? "Denegada: " + (MOTIVOS[m.reason] || m.reason || "operación no permitida")
+            : "";
+        if (motivo) info.append(el("span", "motivo", motivo));
+        li.append(info);
+
+        const lado = el("div", "lado");
+        const signo = esDenegado(m) ? "" : (d.signo === "mas" ? "+" : "−");
+        lado.append(el("span", "monto " + d.signo, signo + dinero(m.amount, m.currency)));
+        const estadoTexto = m.suspicious ? "Sospechosa" : esDenegado(m) ? "Denegada" : "Completada";
+        lado.append(el("span", "badge " + (m.suspicious ? "SUSPICIOUS" : m.status), estadoTexto));
+        li.append(lado);
+        return li;
     }
 
-    function upsert(t, animar) {
-        transacciones.set(t.tx_id, t);
-        const nueva = crearFila(t);
-        const existente = rows.querySelector(`tr[data-tx-id="${CSS.escape(t.tx_id)}"]`);
-        if (existente) {
-            existente.replaceWith(nueva);
+    function pintarMovimientos(resaltar) {
+        const lista = [...estado.movimientos.values()]
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const visibles = lista.filter(pasaFiltros);
+        $("movs").replaceChildren(...visibles.map(m => crearFila(m, m.tx_id === resaltar)));
+        $("movs-vacio").hidden = visibles.length > 0;
+        $("movs-vacio").textContent = lista.length ? "No hay movimientos con estos filtros." : "Esperando movimientos…";
+        $("movs-contador").textContent = visibles.length === lista.length
+            ? lista.length + " en total"
+            : visibles.length + " de " + lista.length;
+
+        $("k-total").textContent = lista.length;
+        $("k-ok").textContent = lista.filter(m => m.status === "COMPLETED").length;
+        $("k-den").textContent = lista.filter(esDenegado).length;
+        $("k-sos").textContent = lista.filter(m => m.suspicious).length;
+    }
+
+    function avisarResultado(m) {
+        const descripcion = estado.pendientes.get(m.tx_id);
+        const anterior = estado.movimientos.get(m.tx_id);
+        if (m.suspicious && !(anterior && anterior.suspicious)) {
+            toast("Alerta de fraude: " + (MOTIVOS[m.fraud_reason] || m.fraud_reason) + " (" + dinero(m.amount, m.currency) + ")", "danger");
+        }
+        if (!descripcion) return;
+        estado.pendientes.delete(m.tx_id);
+        if (esDenegado(m)) {
+            toast(descripcion + " denegado: " + (MOTIVOS[m.reason] || m.reason), "warn");
         } else {
-            rows.prepend(nueva);
+            toast(descripcion + " completado", "ok");
         }
-        if (animar) nueva.classList.add("flash");
-        actualizarContadores();
     }
 
-    function snapshot(lista) {
-        transacciones.clear();
-        rows.innerHTML = "";
-        [...lista].reverse().forEach(t => upsert(t, false));
-        actualizarContadores();
+    function upsert(m) {
+        avisarResultado(m);
+        estado.movimientos.set(m.tx_id, m);
+        pintarMovimientos(m.tx_id);
     }
 
+    // ---------- Comunicación ----------
     function conectar() {
         const ws = new WebSocket(WS_URL);
-        const dot = document.getElementById("dot");
-        const estado = document.getElementById("status-text");
-
-        ws.onopen = () => { dot.classList.add("on"); estado.textContent = "Conectado a " + WS_URL; };
+        ws.onopen = () => {
+            $("conexion").classList.add("on");
+            $("conexion-texto").textContent = "En vivo";
+        };
         ws.onclose = () => {
-            dot.classList.remove("on");
-            estado.textContent = "Desconectado - reintentando…";
+            $("conexion").classList.remove("on");
+            $("conexion-texto").textContent = "Reconectando…";
             setTimeout(conectar, 2000);
         };
-        ws.onmessage = (mensaje) => {
-            const datos = JSON.parse(mensaje.data);
-            if (datos.type === "SNAPSHOT") snapshot(datos.transactions || []);
-            if (datos.type === "UPSERT") upsert(datos.transaction, true);
+        ws.onmessage = (evento) => {
+            const datos = JSON.parse(evento.data);
+            aplicarCuentas(datos.accounts);
+            if (datos.type === "SNAPSHOT") {
+                estado.movimientos.clear();
+                (datos.transactions || []).forEach(m => estado.movimientos.set(m.tx_id, m));
+                pintarMovimientos();
+            }
+            if (datos.type === "UPSERT" && datos.transaction) upsert(datos.transaction);
         };
     }
 
-    async function enviarTransferencia(cuerpo) {
-        const feedback = document.getElementById("feedback");
+    async function post(ruta, cuerpo, descripcion) {
+        const respuesta = await fetch(API + ruta, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cuerpo)
+        });
+        const json = await respuesta.json().catch(() => ({}));
+        if (!respuesta.ok) throw new Error(json.message || ("Error " + respuesta.status));
+        estado.pendientes.set(json.tx_id, descripcion);
+        return json;
+    }
+
+    async function ejecutar(boton, accion) {
+        boton.disabled = true;
         try {
-            const respuesta = await fetch(API_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(cuerpo)
-            });
-            const json = await respuesta.json();
-            feedback.textContent = respuesta.ok
-                ? `Comando encolado: ${json.tx_id}`
-                : `Error: ${json.message || respuesta.status}`;
+            await accion();
         } catch (e) {
-            feedback.textContent = "No se pudo contactar transaction_api (" + API_URL + ")";
+            toast(e.message.startsWith("Failed") ? "No se pudo contactar transaction_api (" + API + ")" : e.message, "danger");
+        } finally {
+            boton.disabled = false;
         }
     }
 
-    document.getElementById("transfer-form").addEventListener("submit", (e) => {
+    // ---------- Eventos de la interfaz ----------
+    $("usuario").addEventListener("change", (e) => e.target.value.trim() && seleccionarUsuario(e.target.value));
+    $("tab-enviar").addEventListener("click", () => cambiarPestana("enviar"));
+    $("tab-recargar").addEventListener("click", () => cambiarPestana("recargar"));
+    $("form-enviar").amount.addEventListener("input", validarMontoEnvio);
+
+    $("form-enviar").addEventListener("submit", (e) => {
         e.preventDefault();
-        const datos = Object.fromEntries(new FormData(e.target).entries());
-        datos.amount = Number(datos.amount);
-        enviarTransferencia(datos);
+        const f = e.target;
+        const cuerpo = { from_user: estado.usuario, to_user: f.to_user.value.trim(), amount: Number(f.amount.value), currency: f.currency.value };
+        ejecutar(f.querySelector("button[type=submit]"), async () => {
+            await post("/transfer", cuerpo, "Envío de " + dinero(cuerpo.amount, cuerpo.currency) + " a " + cuerpo.to_user);
+            toast("Envío en proceso…");
+            f.amount.value = "";
+            validarMontoEnvio();
+        });
     });
 
-    document.getElementById("btn-fraud").addEventListener("click", () => {
-        enviarTransferencia({ from_user: "C", to_user: "D", amount: 20000, currency: "USD" });
+    $("form-recargar").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const cuerpo = { user: estado.usuario, amount: Number(f.amount.value), currency: f.currency.value };
+        ejecutar(f.querySelector("button[type=submit]"), async () => {
+            await post("/deposit", cuerpo, "Recarga de " + dinero(cuerpo.amount, cuerpo.currency));
+            toast("Recarga en proceso…");
+            f.amount.value = "";
+        });
     });
 
+    document.querySelectorAll(".chips button").forEach(b => b.addEventListener("click", () => {
+        const campo = $("form-recargar").amount;
+        campo.value = Number(campo.value || 0) + Number(b.dataset.monto);
+    }));
+
+    document.querySelectorAll(".filtros button").forEach(b => b.addEventListener("click", () => {
+        estado.filtro = b.dataset.filtro;
+        document.querySelectorAll(".filtros button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+        pintarMovimientos();
+    }));
+    $("buscar").addEventListener("input", (e) => { estado.busqueda = e.target.value.trim().toLowerCase(); pintarMovimientos(); });
+    $("solo-mios").addEventListener("change", (e) => { estado.soloMios = e.target.checked; pintarMovimientos(); });
+
+    $("demo-fraude").addEventListener("click", (e) => ejecutar(e.currentTarget, async () => {
+        await post("/deposit", { user: "C", amount: 25000, currency: "USD" }, "Recarga de C");
+        await post("/transfer", { from_user: "C", to_user: "D", amount: 20000, currency: "USD" }, "Envío de $20.000 de C a D");
+        toast("Escenario enviado: recarga a C y envío de $20.000 a D");
+    }));
+    $("demo-denegada").addEventListener("click", (e) => ejecutar(e.currentTarget, async () => {
+        await post("/transfer", { from_user: "Z", to_user: "A", amount: 100, currency: "USD" }, "Envío de Z a A");
+        toast("Escenario enviado: Z intenta enviar $100 sin saldo");
+    }));
+
+    seleccionarUsuario(estado.usuario);
+    pintarMovimientos();
     conectar();
 </script>
 </body>

@@ -1,11 +1,11 @@
 package com.banco.ledger.processor.infrastructure.persistence;
 
 import com.banco.ledger.processor.application.port.TransaccionRepository;
+import com.banco.ledger.processor.domain.contract.TransactionEventRecord;
 import com.banco.ledger.processor.domain.model.TransactionId;
-import com.banco.ledger.processor.domain.model.Transaccion;
 import org.springframework.stereotype.Repository;
 
-/** Adaptador de persistencia: traduce el agregado de dominio a la tabla del ledger. */
+/** Adaptador de persistencia: guarda cada asiento del ledger en la tabla ledger_movimientos. */
 @Repository
 public class TransaccionRepositoryAdapter implements TransaccionRepository {
 
@@ -21,7 +21,7 @@ public class TransaccionRepositoryAdapter implements TransaccionRepository {
     }
 
     @Override
-    public void guardar(Transaccion transaccion) {
-        jpa.save(TransaccionJpaEntity.desdeEvento(transaccion.aEvento()));
+    public void guardar(TransactionEventRecord asiento) {
+        jpa.save(TransaccionJpaEntity.desdeEvento(asiento));
     }
 }

@@ -16,14 +16,17 @@ import java.time.Instant;
  */
 @Entity
 @Immutable
-@Table(name = "ledger_transacciones")
+@Table(name = "ledger_movimientos")
 public class TransaccionJpaEntity {
 
     @Id
     @Column(name = "tx_id", length = 64)
     private String txId;
 
-    @Column(name = "from_user", nullable = false, length = 100)
+    @Column(name = "type", nullable = false, length = 20)
+    private String type;
+
+    @Column(name = "from_user", length = 100)
     private String fromUser;
 
     @Column(name = "to_user", nullable = false, length = 100)
@@ -41,6 +44,12 @@ public class TransaccionJpaEntity {
     @Column(name = "reason", length = 100)
     private String reason;
 
+    @Column(name = "from_balance", precision = 19, scale = 2)
+    private BigDecimal fromBalance;
+
+    @Column(name = "to_balance", precision = 19, scale = 2)
+    private BigDecimal toBalance;
+
     @Column(name = "processed_at", nullable = false)
     private Instant processedAt;
 
@@ -50,12 +59,15 @@ public class TransaccionJpaEntity {
 
     private TransaccionJpaEntity(TransactionEventRecord evento) {
         this.txId = evento.txId();
+        this.type = evento.type();
         this.fromUser = evento.fromUser();
         this.toUser = evento.toUser();
         this.amount = evento.amount();
         this.currency = evento.currency();
         this.status = evento.status();
         this.reason = evento.reason();
+        this.fromBalance = evento.fromBalance();
+        this.toBalance = evento.toBalance();
         this.processedAt = evento.timestamp();
     }
 

@@ -1,5 +1,6 @@
 package com.banco.ledger.dashboard.infrastructure.web;
 
+import com.banco.ledger.dashboard.domain.model.SaldoCuenta;
 import com.banco.ledger.dashboard.domain.model.TransaccionVista;
 import com.banco.ledger.dashboard.domain.model.VistaMaterializada;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Consulta (lado Query de CQRS) de la vista materializada. */
+/** Consultas (lado Query de CQRS) de la vista materializada. */
 @RestController
 @CrossOrigin(origins = "*")
 public class TransaccionesController {
@@ -22,5 +23,10 @@ public class TransaccionesController {
     @GetMapping("/api/transactions")
     public List<TransaccionVista> transacciones() {
         return vista.instantanea();
+    }
+
+    @GetMapping("/api/accounts")
+    public List<SaldoCuenta> cuentas() {
+        return vista.cuentas();
     }
 }

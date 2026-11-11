@@ -3,10 +3,9 @@ package com.banco.ledger.processor.application;
 import com.banco.ledger.processor.application.port.CuentaRepository;
 import com.banco.ledger.processor.application.port.PublicadorEventosLedger;
 import com.banco.ledger.processor.application.port.TransaccionRepository;
+import com.banco.ledger.processor.domain.contract.ComandoLedger;
 import com.banco.ledger.processor.domain.contract.TransactionEventRecord;
-import com.banco.ledger.processor.domain.contract.TransferCommandRecord;
 import com.banco.ledger.processor.domain.model.CuentaBancaria;
-import com.banco.ledger.processor.domain.model.MontoDinero;
 import com.banco.ledger.processor.domain.model.PoliticaAperturaCuentas;
 import com.banco.ledger.processor.domain.model.TransactionId;
 import com.banco.ledger.processor.domain.model.Transaccion;
@@ -20,7 +19,7 @@ import java.time.Clock;
 import java.util.Optional;
 
 /**
- * Orquestador del caso de uso "procesar transferencia".
+ * Orquestador del caso de uso "procesar movimiento" (transferencia o recarga).
  * Comando -> reglas de dominio -> persistencia (PostgreSQL) -> evento (Kafka).
  * Solo conoce puertos (interfaces); los adaptadores se inyectan por constructor.
  */
@@ -51,29 +50,28 @@ public class ProcesadorTransacciones {
     }
 
     @Transactional
-    public Optional<TransactionEventRecord> procesar(TransferCommandRecord comando) {
+    public Optional<TransactionEventRecord> procesar(ComandoLedger comando) {
         TransactionId id = new TransactionId(comando.txId());
         if (transacciones.existe(id)) {
             log.warn("Comando duplicado ignorado (idempotencia): {}", id.valor());
             return Optional.empty();
         }
 
-        Transaccion transaccion = Transaccion.recibir(id, comando.fromUser(), comando.toUser(),
-                new MontoDinero(comando.amount(), comando.currency()), comando.requestedAt());
+        Transaccion transaccion = comando.crearTransaccion();
         transaccion.iniciarProcesamiento(clock.instant());
 
-        CuentaBancaria origen = obtenerOAbrirCuenta(comando.fromUser());
-        CuentaBancaria destino = obtenerOAbrirCuenta(comando.toUser());
+        Optional<CuentaBancaria> origen = transaccion.origen().map(this::obtenerOAbrirCuenta);
+        CuentaBancaria destino = obtenerOAbrirCuenta(transaccion.destino());
 
         validaciones.primerMotivoDeRechazo(transaccion, origen, destino).ifPresentOrElse(
                 motivo -> transaccion.rechazar(motivo, clock.instant()),
-                () -> transaccion.ejecutarTransferencia(origen, destino, clock.instant()));
+                () -> transaccion.ejecutar(origen, destino, clock.instant()));
 
-        cuentas.guardar(origen);
+        origen.ifPresent(cuentas::guardar);
         cuentas.guardar(destino);
-        transacciones.guardar(transaccion);
 
-        TransactionEventRecord evento = transaccion.aEvento();
+        TransactionEventRecord evento = transaccion.aEvento(origen.map(CuentaBancaria::saldo), destino.saldo());
+        transacciones.guardar(evento);
         publicador.publicar(evento);
         return Optional.of(evento);
     }

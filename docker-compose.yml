@@ -156,7 +156,7 @@ services:
     container_name: transaction_processor
     environment:
       <<: [*rabbit-env, *kafka-env, *postgres-env, *jvm-env]
-      LEDGER_SALDO_INICIAL: "100000"
+      LEDGER_SALDO_INICIAL: "0"
     networks:
       - messaging-net
       - persistence-net

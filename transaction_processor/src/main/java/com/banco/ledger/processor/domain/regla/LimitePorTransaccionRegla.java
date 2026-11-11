@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Rechaza transferencias que superan el límite operativo por transacción. */
+/** Rechaza movimientos que superan el límite operativo por transacción. */
 public class LimitePorTransaccionRegla implements ReglaValidacionTransaccion {
 
     public static final String MOTIVO = "AMOUNT_LIMIT_EXCEEDED";
@@ -22,7 +22,8 @@ public class LimitePorTransaccionRegla implements ReglaValidacionTransaccion {
     }
 
     @Override
-    public Optional<String> evaluar(Transaccion transaccion, CuentaBancaria origen, CuentaBancaria destino) {
+    public Optional<String> evaluar(Transaccion transaccion, Optional<CuentaBancaria> origen,
+                                    CuentaBancaria destino) {
         return Optional.of(MOTIVO)
                 .filter(motivo -> transaccion.monto().valor().compareTo(limite) > 0);
     }

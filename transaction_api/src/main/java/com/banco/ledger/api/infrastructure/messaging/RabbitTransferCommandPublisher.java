@@ -1,7 +1,7 @@
 package com.banco.ledger.api.infrastructure.messaging;
 
 import com.banco.ledger.api.application.port.TransferCommandPublisher;
-import com.banco.ledger.api.domain.TransferCommandRecord;
+import com.banco.ledger.api.domain.ComandoLedger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -28,7 +28,7 @@ public class RabbitTransferCommandPublisher implements TransferCommandPublisher 
     }
 
     @Override
-    public void publicar(TransferCommandRecord comando) {
+    public void publicar(ComandoLedger comando) {
         try {
             rabbitTemplate.convertAndSend("", queue, objectMapper.writeValueAsString(comando));
             log.info("Comando {} publicado en la cola {}", comando.txId(), queue);

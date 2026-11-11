@@ -17,7 +17,7 @@ class ReglasDeteccionFraudeTest {
     private static final Instant T0 = Instant.parse("2026-11-11T11:31:00Z");
 
     static TransactionEventRecord evento(String txId, String monto, Instant momento) {
-        return new TransactionEventRecord(txId, "A", "B", new BigDecimal(monto), "USD", "COMPLETED", null, momento);
+        return new TransactionEventRecord(txId, "A", "B", new BigDecimal(monto), "USD", "COMPLETED", null, momento, "TRANSFER");
     }
 
     @Test

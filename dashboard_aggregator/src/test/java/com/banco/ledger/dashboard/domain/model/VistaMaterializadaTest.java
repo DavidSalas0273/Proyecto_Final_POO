@@ -12,9 +12,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VistaMaterializadaTest {
 
+    private static final Instant T0 = Instant.parse("2026-11-11T11:31:02Z");
+
     private static TransactionEventRecord evento(String txId, String monto) {
         return new TransactionEventRecord(txId, "A", "B", new BigDecimal(monto), "USD", "COMPLETED", null,
-                Instant.parse("2026-11-11T11:31:02Z"));
+                T0, "TRANSFER", null, null);
+    }
+
+    private static TransactionEventRecord conSaldos(String txId, String tipo, String from, String status,
+                                                    String fromBalance, String toBalance, Instant momento) {
+        return new TransactionEventRecord(txId, from, "B", BigDecimal.TEN, "USD", status, null, momento, tipo,
+                fromBalance == null ? null : new BigDecimal(fromBalance), new BigDecimal(toBalance));
     }
 
     @Test
@@ -69,6 +77,33 @@ class VistaMaterializadaTest {
         vista.aplicarTransaccion(evento("tx-3", "3"));
 
         assertThat(vista.instantanea()).extracting(TransaccionVista::txId).containsExactly("tx-3", "tx-2");
+    }
+
+    @Test
+    void losEventosActualizanLosSaldosDeLasCuentas() {
+        // Arrange
+        VistaMaterializada vista = new VistaMaterializada(10);
+
+        // Act: recarga a B y luego transferencia denegada de A a B
+        vista.aplicarTransaccion(conSaldos("tx-r", "DEPOSIT", null, "COMPLETED", null, "100", T0));
+        vista.aplicarTransaccion(conSaldos("tx-t", "TRANSFER", "A", "REJECTED", "0", "100", T0.plusSeconds(5)));
+
+        // Assert
+        assertThat(vista.cuentas())
+                .extracting(SaldoCuenta::usuario, c -> c.saldo().intValue())
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("A", 0),
+                        org.assertj.core.groups.Tuple.tuple("B", 100));
+    }
+
+    @Test
+    void unEventoAntiguoNoSobrescribeUnSaldoMasReciente() {
+        VistaMaterializada vista = new VistaMaterializada(10);
+        vista.aplicarTransaccion(conSaldos("tx-2", "DEPOSIT", null, "COMPLETED", null, "300", T0.plusSeconds(10)));
+        vista.aplicarTransaccion(conSaldos("tx-1", "DEPOSIT", null, "COMPLETED", null, "100", T0));
+
+        assertThat(vista.cuentas()).singleElement()
+                .satisfies(c -> assertThat(c.saldo()).isEqualByComparingTo("300"));
     }
 
     @Test

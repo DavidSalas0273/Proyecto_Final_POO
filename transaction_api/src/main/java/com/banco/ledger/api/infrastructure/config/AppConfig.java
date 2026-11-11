@@ -22,9 +22,10 @@ public class AppConfig implements WebMvcConfigurer {
         return () -> UUID.randomUUID().toString();
     }
 
-    /** Permite que dashboard.html (abierto como archivo local) envíe transferencias. */
+    /** Permite que dashboard.html (abierto como archivo local) envíe transferencias y recargas. */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/transfer").allowedOrigins("*").allowedMethods("POST", "OPTIONS");
+        registry.addMapping("/deposit").allowedOrigins("*").allowedMethods("POST", "OPTIONS");
     }
 }

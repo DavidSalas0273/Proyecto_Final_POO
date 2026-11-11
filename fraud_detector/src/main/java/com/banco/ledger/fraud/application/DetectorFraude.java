@@ -14,7 +14,7 @@ import java.time.Clock;
 import java.util.Optional;
 
 /**
- * Caso de uso: analizar cada evento COMPLETED del ledger, mantener el estado del
+ * Caso de uso: analizar cada transferencia COMPLETED del ledger, mantener el estado del
  * flujo y, si alguna estrategia lo marca, auditar en PostgreSQL y publicar la alerta.
  */
 @Service
@@ -39,7 +39,7 @@ public class DetectorFraude {
 
     public Optional<FraudAlertRecord> analizar(TransactionEventRecord evento) {
         return Optional.of(evento)
-                .filter(TransactionEventRecord::estaCompletada)
+                .filter(TransactionEventRecord::esTransferenciaCompletada)
                 .flatMap(this::evaluar);
     }
 

@@ -32,7 +32,8 @@ class ProyeccionDashboardTest {
     private ProyeccionDashboard proyeccion;
 
     private final TransactionEventRecord evento = new TransactionEventRecord("tx-1", "A", "B",
-            new BigDecimal("50"), "USD", "COMPLETED", null, Instant.parse("2026-11-11T11:30:02Z"));
+            new BigDecimal("50"), "USD", "COMPLETED", null, Instant.parse("2026-11-11T11:30:02Z"),
+            "TRANSFER", null, new BigDecimal("50"));
 
     @Test
     void cadaTransaccionSeDifundeUnaVez() {
