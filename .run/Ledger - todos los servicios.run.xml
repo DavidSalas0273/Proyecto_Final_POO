@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Ledger - todos los servicios" type="CompoundRunConfigurationType">
+    <toRun name="transaction_api" type="Application" />
+    <toRun name="transaction_processor" type="Application" />
+    <toRun name="fraud_detector" type="Application" />
+    <toRun name="dashboard_aggregator" type="Application" />
+    <toRun name="notification_router" type="Application" />
+    <toRun name="ad_generator" type="Application" />
+    <toRun name="email_worker" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>

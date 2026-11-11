@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="email_worker" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.banco.ledger.email.EmailWorkerApplication" />
+    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8" />
+    <module name="email-worker" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/email_worker" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

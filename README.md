@@ -87,6 +87,30 @@ Notas:
 - Las cuentas nuevas se abren con un saldo inicial de 100,000 USD (`LEDGER_SALDO_INICIAL`), así que una transferencia mayor a ese saldo se rechaza con `INSUFFICIENT_FUNDS`.
 - Cada vez que arranca, el `dashboard_aggregator` reconstruye su vista en memoria reproduciendo los topics de Kafka desde el inicio.
 
+## Desarrollo desde IntelliJ IDEA (Run / Debug)
+
+1. Abre el proyecto: **File → Open**, elige el `pom.xml` raíz y luego **Open as Project**. Usa el **SDK 17**.
+2. Levanta solo la infraestructura. Puedes usar la configuración **Infraestructura (Docker)** o ejecutar:
+
+   ```bash
+   docker compose -f docker-compose.infra.yml up -d
+   ```
+
+3. Elige **Ledger - todos los servicios** en el selector de configuraciones y pulsa ▶ (o 🐞 para depurar). También puedes arrancar un servicio suelto con su propia configuración.
+4. Abre `dashboard/dashboard.html` en el navegador.
+
+Las configuraciones están en la carpeta `.run/` y IntelliJ las detecta solas. Los servicios usan los valores por defecto de cada `application.yml`:
+
+| Servicio | Dirección | Credenciales |
+|---|---|---|
+| PostgreSQL | `localhost:5433` | `ledger`/`ledger` |
+| Kafka | `localhost:9092` | — |
+| RabbitMQ | `localhost:5672` | `ledger`/`ledger` |
+
+PostgreSQL usa el 5433 para no chocar con un PostgreSQL instalado en Windows.
+
+No ejecutes `docker-compose.infra.yml` y `docker-compose.yml` a la vez, porque usan los mismos puertos.
+
 ## Pruebas unitarias
 
 Las pruebas son JUnit 5 + Mockito con el patrón AAA. No arrancan Spring, ni bases de datos, ni brokers. Para ejecutarlas todas sin tener Maven instalado:

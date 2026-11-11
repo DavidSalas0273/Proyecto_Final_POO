@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="fraud_detector" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.banco.ledger.fraud.FraudDetectorApplication" />
+    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8" />
+    <module name="fraud-detector" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/fraud_detector" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

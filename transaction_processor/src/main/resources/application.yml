@@ -5,7 +5,7 @@ spring:
     keep-alive: true
     web-application-type: none
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ledger}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:ledger}
     username: ${POSTGRES_USER:ledger}
     password: ${POSTGRES_PASSWORD:ledger}
     hikari:
@@ -17,8 +17,8 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    username: ${RABBITMQ_USER:ledger}
+    password: ${RABBITMQ_PASSWORD:ledger}
     listener:
       simple:
         prefetch: 1

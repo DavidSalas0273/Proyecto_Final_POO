@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="transaction_processor" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.banco.ledger.processor.TransactionProcessorApplication" />
+    <option name="VM_PARAMETERS" value="-Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8" />
+    <module name="transaction-processor" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/transaction_processor" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
