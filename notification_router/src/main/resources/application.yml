@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: notification-router
+  main:
+    keep-alive: true
+    web-application-type: none
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notification-router
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+ledger:
+  kafka:
+    transactions-topic: transactions_log
+  rabbit:
+    email-queue: email_queue
+  email:
+    dominio: email.com

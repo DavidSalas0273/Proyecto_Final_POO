@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: ad-generator
+  main:
+    keep-alive: true
+    web-application-type: none
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+ledger:
+  rabbit:
+    email-queue: email_queue
+  ads:
+    audiencia: all_users@banco-ledger.com
+    intervalo-ms: ${ADS_INTERVAL_MS:30000}
+    retraso-inicial-ms: ${ADS_INITIAL_DELAY_MS:15000}

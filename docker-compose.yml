@@ -1,0 +1,298 @@
+name: ledger-bancario
+
+# ---------------------------------------------------------------------------
+# Variables comunes (anclas YAML)
+# ---------------------------------------------------------------------------
+x-rabbit-env: &rabbit-env
+  RABBITMQ_HOST: rabbitmq
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: ${RABBITMQ_USER:-ledger}
+  RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-ledger}
+
+x-kafka-env: &kafka-env
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+x-postgres-env: &postgres-env
+  POSTGRES_HOST: postgres-db
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ${POSTGRES_DB:-ledger}
+  POSTGRES_USER: ${POSTGRES_USER:-ledger}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledger}
+
+x-jvm-env: &jvm-env
+  JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
+
+services:
+  # =========================================================================
+  # Infraestructura
+  # =========================================================================
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ledger}
+      POSTGRES_USER: ${POSTGRES_USER:-ledger}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ledger}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - persistence-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_HEAP_OPTS: "-Xms128m -Xmx256m"
+    networks:
+      - messaging-net
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    container_name: kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx512m"
+    networks:
+      - messaging-net
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ledger}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-ledger}
+    ports:
+      - "15672:15672"   # consola de administración
+    networks:
+      - messaging-net
+      - public-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+    restart: unless-stopped
+
+  # =========================================================================
+  # Microservicios Spring Boot
+  # =========================================================================
+  transaction_api:
+    build: ./transaction_api
+    image: ledger/transaction-api:1.0.0
+    container_name: transaction_api
+    environment:
+      <<: [*rabbit-env, *jvm-env]
+    ports:
+      - "8080:8080"
+    networks:
+      - messaging-net
+      - public-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 384M
+    restart: on-failure
+
+  transaction_processor:
+    build: ./transaction_processor
+    image: ledger/transaction-processor:1.0.0
+    container_name: transaction_processor
+    environment:
+      <<: [*rabbit-env, *kafka-env, *postgres-env, *jvm-env]
+      LEDGER_SALDO_INICIAL: "100000"
+    networks:
+      - messaging-net
+      - persistence-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 512M
+    restart: on-failure
+
+  fraud_detector:
+    build: ./fraud_detector
+    image: ledger/fraud-detector:1.0.0
+    container_name: fraud_detector
+    environment:
+      <<: [*kafka-env, *postgres-env, *jvm-env]
+      FRAUD_HIGH_VALUE_THRESHOLD: "10000"
+      FRAUD_MAX_TX_PER_WINDOW: "5"
+      FRAUD_WINDOW_SECONDS: "60"
+    networks:
+      - messaging-net
+      - persistence-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres-db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+    restart: on-failure
+
+  dashboard_aggregator:
+    build: ./dashboard_aggregator
+    image: ledger/dashboard-aggregator:1.0.0
+    container_name: dashboard_aggregator
+    environment:
+      <<: [*kafka-env, *jvm-env]
+    ports:
+      - "8081:8081"   # WebSocket ws://localhost:8081/ws
+    networks:
+      - messaging-net
+      - public-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 384M
+    restart: on-failure
+
+  notification_router:
+    build: ./notification_router
+    image: ledger/notification-router:1.0.0
+    container_name: notification_router
+    environment:
+      <<: [*rabbit-env, *kafka-env, *jvm-env]
+    networks:
+      - messaging-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 384M
+    restart: on-failure
+
+  ad_generator:
+    build: ./ad_generator
+    image: ledger/ad-generator:1.0.0
+    container_name: ad_generator
+    environment:
+      <<: [*rabbit-env, *jvm-env]
+      ADS_INTERVAL_MS: "30000"
+    networks:
+      - messaging-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 384M
+    restart: on-failure
+
+  email_worker:
+    build: ./email_worker
+    image: ledger/email-worker:1.0.0
+    # Sin container_name: necesario para poder escalar con deploy.replicas
+    environment:
+      <<: [*rabbit-env, *jvm-env]
+      EMAIL_SIMULATED_LATENCY_MS: "500"
+    networks:
+      - messaging-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 384M
+    restart: on-failure
+
+# ---------------------------------------------------------------------------
+# Segmentación de redes
+#  - public-net: única red con puertos publicados al host.
+#  - messaging-net: tráfico interno Kafka/Zookeeper/RabbitMQ (sin salida externa).
+#  - persistence-net: tráfico a PostgreSQL, solo para los servicios que persisten.
+# ---------------------------------------------------------------------------
+networks:
+  public-net:
+    driver: bridge
+  messaging-net:
+    driver: bridge
+    internal: true
+  persistence-net:
+    driver: bridge
+    internal: true
+
+volumes:
+  pgdata:

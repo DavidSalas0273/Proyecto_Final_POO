@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: transaction-processor
+  main:
+    keep-alive: true
+    web-application-type: none
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ledger}
+    username: ${POSTGRES_USER:ledger}
+    password: ${POSTGRES_PASSWORD:ledger}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        prefetch: 1
+        concurrency: 1
+        default-requeue-rejected: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+
+ledger:
+  rabbit:
+    transfer-queue: transfer_commands
+  kafka:
+    transactions-topic: transactions_log
+  cuentas:
+    saldo-inicial: ${LEDGER_SALDO_INICIAL:100000}
+    divisa-base: USD
+  reglas:
+    limite-por-transaccion: ${LEDGER_LIMITE_TRANSACCION:1000000}

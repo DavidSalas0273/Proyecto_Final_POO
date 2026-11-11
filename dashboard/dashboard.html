@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledger P2P - Dashboard</title>
+    <style>
+        :root {
+            --bg: #f4f6fa;
+            --panel: #ffffff;
+            --text: #1d2433;
+            --muted: #6b7385;
+            --border: #e2e6ee;
+            --accent: #2457d6;
+            --ok: #1f8a4c;
+            --ok-bg: #e6f5ec;
+            --danger: #c62828;
+            --danger-bg: #fde8e8;
+            --neutral-bg: #eef0f4;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            padding: 18px 24px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+        }
+        header h1 { margin: 0; font-size: 20px; }
+        header p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+        .status { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
+        .dot.on { background: var(--ok); }
+        main { max-width: 1200px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 20px; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
+        .card span { display: block; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+        .card strong { font-size: 26px; font-variant-numeric: tabular-nums; }
+        .card.alert strong { color: var(--danger); }
+        form.panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        label { display: grid; gap: 4px; font-size: 12px; color: var(--muted); }
+        input, select {
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 110px;
+        }
+        button {
+            padding: 9px 16px;
+            border: 0;
+            border-radius: 6px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button.secondary { background: var(--danger); }
+        #feedback { font-size: 13px; color: var(--muted); flex-basis: 100%; min-height: 18px; }
+        .table-wrap { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: #fafbfd; }
+        td.amount { text-align: right; font-variant-numeric: tabular-nums; }
+        td.id { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); }
+        tr.suspicious td { background: var(--danger-bg); color: var(--danger); font-weight: 600; }
+        tr.rejected td { color: var(--muted); }
+        tr.flash td { animation: flash 1.2s ease-out; }
+        @keyframes flash { from { background: #fff7c2; } }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--neutral-bg);
+        }
+        .badge.COMPLETED { background: var(--ok-bg); color: var(--ok); }
+        .badge.REJECTED { background: var(--neutral-bg); color: var(--muted); }
+        .badge.fraud { background: var(--danger); color: #fff; margin-left: 6px; }
+        .empty { padding: 30px; text-align: center; color: var(--muted); }
+    </style>
+</head>
+<body>
+<header>
+    <div>
+        <h1>Ledger P2P &mdash; Transacciones en tiempo real</h1>
+        <p>Vista materializada de <code>transactions_log</code> + <code>fraud_alerts</code> (Kafka) v&iacute;a WebSocket</p>
+    </div>
+    <div class="status"><span id="dot" class="dot"></span><span id="status-text">Desconectado</span></div>
+</header>
+
+<main>
+    <section class="cards">
+        <div class="card"><span>Transacciones</span><strong id="c-total">0</strong></div>
+        <div class="card"><span>Completadas</span><strong id="c-completed">0</strong></div>
+        <div class="card"><span>Rechazadas</span><strong id="c-rejected">0</strong></div>
+        <div class="card alert"><span>Sospechosas</span><strong id="c-suspicious">0</strong></div>
+    </section>
+
+    <form class="panel" id="transfer-form">
+        <label>Desde<input name="from_user" value="A" required></label>
+        <label>Hacia<input name="to_user" value="B" required></label>
+        <label>Monto<input name="amount" type="number" min="0.01" step="0.01" value="50" required></label>
+        <label>Divisa
+            <select name="currency">
+                <option>USD</option>
+                <option>EUR</option>
+                <option>COP</option>
+            </select>
+        </label>
+        <button type="submit">Enviar transferencia</button>
+        <button type="button" class="secondary" id="btn-fraud">Simular $20,000</button>
+        <div id="feedback"></div>
+    </form>
+
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>tx_id</th>
+                <th>Desde</th>
+                <th>Hacia</th>
+                <th style="text-align:right">Monto</th>
+                <th>Estado</th>
+                <th>Detalle</th>
+            </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+        <div class="empty" id="empty">Esperando transacciones&hellip;</div>
+    </div>
+</main>
+
+<script>
+    const WS_URL = "ws://localhost:8081/ws";
+    const API_URL = "http://localhost:8080/transfer";
+
+    const transacciones = new Map();
+    const rows = document.getElementById("rows");
+
+    function formatearMonto(t) {
+        const valor = Number(t.amount).toLocaleString("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return valor + " " + (t.currency || "");
+    }
+
+    function formatearFecha(iso) {
+        return iso ? new Date(iso).toLocaleTimeString("es-CO") : "";
+    }
+
+    function crearCelda(texto, clase) {
+        const td = document.createElement("td");
+        td.textContent = texto;
+        if (clase) td.className = clase;
+        return td;
+    }
+
+    function crearFila(t) {
+        const tr = document.createElement("tr");
+        tr.dataset.txId = t.tx_id;
+        if (t.suspicious) tr.classList.add("suspicious");
+        if (t.status === "REJECTED") tr.classList.add("rejected");
+
+        tr.append(
+            crearCelda(formatearFecha(t.timestamp)),
+            crearCelda(t.tx_id, "id"),
+            crearCelda(t.from_user),
+            crearCelda(t.to_user),
+            crearCelda(formatearMonto(t), "amount")
+        );
+
+        const estado = document.createElement("td");
+        const badge = document.createElement("span");
+        badge.className = "badge " + t.status;
+        badge.textContent = t.status;
+        estado.append(badge);
+        if (t.suspicious) {
+            const fraude = document.createElement("span");
+            fraude.className = "badge fraud";
+            fraude.textContent = "SOSPECHOSA";
+            estado.append(fraude);
+        }
+        tr.append(estado);
+        tr.append(crearCelda(t.fraud_reason || t.reason || ""));
+        return tr;
+    }
+
+    function actualizarContadores() {
+        const lista = [...transacciones.values()];
+        document.getElementById("c-total").textContent = lista.length;
+        document.getElementById("c-completed").textContent = lista.filter(t => t.status === "COMPLETED").length;
+        document.getElementById("c-rejected").textContent = lista.filter(t => t.status === "REJECTED").length;
+        document.getElementById("c-suspicious").textContent = lista.filter(t => t.suspicious).length;
+        document.getElementById("empty").style.display = lista.length ? "none" : "block";
+    }
+
+    function upsert(t, animar) {
+        transacciones.set(t.tx_id, t);
+        const nueva = crearFila(t);
+        const existente = rows.querySelector(`tr[data-tx-id="${CSS.escape(t.tx_id)}"]`);
+        if (existente) {
+            existente.replaceWith(nueva);
+        } else {
+            rows.prepend(nueva);
+        }
+        if (animar) nueva.classList.add("flash");
+        actualizarContadores();
+    }
+
+    function snapshot(lista) {
+        transacciones.clear();
+        rows.innerHTML = "";
+        [...lista].reverse().forEach(t => upsert(t, false));
+        actualizarContadores();
+    }
+
+    function conectar() {
+        const ws = new WebSocket(WS_URL);
+        const dot = document.getElementById("dot");
+        const estado = document.getElementById("status-text");
+
+        ws.onopen = () => { dot.classList.add("on"); estado.textContent = "Conectado a " + WS_URL; };
+        ws.onclose = () => {
+            dot.classList.remove("on");
+            estado.textContent = "Desconectado - reintentando…";
+            setTimeout(conectar, 2000);
+        };
+        ws.onmessage = (mensaje) => {
+            const datos = JSON.parse(mensaje.data);
+            if (datos.type === "SNAPSHOT") snapshot(datos.transactions || []);
+            if (datos.type === "UPSERT") upsert(datos.transaction, true);
+        };
+    }
+
+    async function enviarTransferencia(cuerpo) {
+        const feedback = document.getElementById("feedback");
+        try {
+            const respuesta = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(cuerpo)
+            });
+            const json = await respuesta.json();
+            feedback.textContent = respuesta.ok
+                ? `Comando encolado: ${json.tx_id}`
+                : `Error: ${json.message || respuesta.status}`;
+        } catch (e) {
+            feedback.textContent = "No se pudo contactar transaction_api (" + API_URL + ")";
+        }
+    }
+
+    document.getElementById("transfer-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const datos = Object.fromEntries(new FormData(e.target).entries());
+        datos.amount = Number(datos.amount);
+        enviarTransferencia(datos);
+    });
+
+    document.getElementById("btn-fraud").addEventListener("click", () => {
+        enviarTransferencia({ from_user: "C", to_user: "D", amount: 20000, currency: "USD" });
+    });
+
+    conectar();
+</script>
+</body>
+</html>

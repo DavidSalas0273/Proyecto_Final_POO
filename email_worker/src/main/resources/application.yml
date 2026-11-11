@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: email-worker
+  main:
+    keep-alive: true
+    web-application-type: none
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        prefetch: 1
+        concurrency: 1
+        default-requeue-rejected: false
+
+ledger:
+  rabbit:
+    email-queue: email_queue
+  email:
+    latencia-simulada-ms: ${EMAIL_SIMULATED_LATENCY_MS:500}

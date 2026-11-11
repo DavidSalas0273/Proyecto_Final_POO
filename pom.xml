@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  POM agregador: permite compilar y probar todos los microservicios con un solo comando
+  (mvn test). Cada microservicio es un proyecto Maven independiente con su propio
+  Dockerfile multietapa.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.banco.ledger</groupId>
+    <artifactId>ledger-bancario</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>Plataforma de Transacciones Bancarias (Ledger de Eventos)</name>
+
+    <modules>
+        <module>transaction_api</module>
+        <module>transaction_processor</module>
+        <module>fraud_detector</module>
+        <module>dashboard_aggregator</module>
+        <module>notification_router</module>
+        <module>ad_generator</module>
+        <module>email_worker</module>
+    </modules>
+</project>

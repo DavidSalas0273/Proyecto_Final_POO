@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: fraud-detector
+  main:
+    keep-alive: true
+    web-application-type: none
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:ledger}
+    username: ${POSTGRES_USER:ledger}
+    password: ${POSTGRES_PASSWORD:ledger}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: fraud-detector
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+ledger:
+  kafka:
+    transactions-topic: transactions_log
+    fraud-alerts-topic: fraud_alerts
+  fraude:
+    umbral-alto-valor: ${FRAUD_HIGH_VALUE_THRESHOLD:10000}
+    frecuencia:
+      max-transacciones: ${FRAUD_MAX_TX_PER_WINDOW:5}
+      ventana-segundos: ${FRAUD_WINDOW_SECONDS:60}
