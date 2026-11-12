@@ -130,6 +130,25 @@ class TransaccionTest {
     }
 
     @Test
+    void transaccionReconstituidaContinuaSuCicloHastaSospechosa() {
+        // Arrange: se recupera del ledger en estado COMPLETADA
+        Transaccion tx = Transaccion.reconstituir(new TransactionId("tx-9"), TipoMovimiento.TRANSFER, "C", "D",
+                MontoDinero.de("20000", "USD"),
+                com.banco.ledger.processor.domain.estado.EstadoCompletada.INSTANCIA, null, T0);
+
+        // Act
+        tx.marcarComoSospechosa("HIGH_VALUE_TRANSACTION", T1);
+
+        // Assert
+        assertThat(tx.estadoActual()).isEqualTo("SUSPICIOUS");
+        assertThat(tx.admiteMarcaDeSospecha()).isFalse();
+        TransactionEventRecord evento = tx.aEvento();
+        assertThat(evento.status()).isEqualTo("SUSPICIOUS");
+        assertThat(evento.reason()).isEqualTo("HIGH_VALUE_TRANSACTION");
+        assertThat(evento.fromUser()).isEqualTo("C");
+    }
+
+    @Test
     void rechazaCuentaQueNoPerteneceAlOrigen() {
         Transaccion tx = nuevaTransferencia("10");
         tx.iniciarProcesamiento(T0);

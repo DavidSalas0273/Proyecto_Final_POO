@@ -5,6 +5,7 @@ import com.banco.ledger.fraud.application.port.RepositorioAlertasFraude;
 import com.banco.ledger.fraud.domain.contract.FraudAlertRecord;
 import com.banco.ledger.fraud.domain.contract.TransactionEventRecord;
 import com.banco.ledger.fraud.domain.model.HistorialTransacciones;
+import com.banco.ledger.fraud.domain.model.RegistroAuditoria;
 import com.banco.ledger.fraud.domain.regla.PoliticaDeteccionFraude;
 import com.banco.ledger.fraud.domain.regla.TransaccionAltoValorRegla;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,11 +66,11 @@ class DetectorFraudeTest {
 
         // Assert
         assertThat(alerta).isPresent();
-        ArgumentCaptor<FraudAlertRecord> captor = ArgumentCaptor.forClass(FraudAlertRecord.class);
-        verify(repositorio, times(1)).registrar(captor.capture());
-        verify(publicador, times(1)).publicar(captor.getValue());
-        assertThat(captor.getValue().reason()).isEqualTo(TransaccionAltoValorRegla.MOTIVO);
-        assertThat(captor.getValue().detectedAt()).isEqualTo(AHORA);
+        ArgumentCaptor<RegistroAuditoria> registro = ArgumentCaptor.forClass(RegistroAuditoria.class);
+        verify(repositorio, times(1)).registrar(registro.capture());
+        verify(publicador, times(1)).publicar(registro.getValue().aAlerta());
+        assertThat(registro.getValue().motivo()).isEqualTo(TransaccionAltoValorRegla.MOTIVO);
+        assertThat(alerta.get().detectedAt()).isEqualTo(AHORA);
     }
 
     @Test

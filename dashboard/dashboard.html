@@ -579,7 +579,8 @@
             : visibles.length + " de " + lista.length;
 
         $("k-total").textContent = lista.length;
-        $("k-ok").textContent = lista.filter(m => m.status === "COMPLETED").length;
+        // Una sospechosa también se completó (el dinero se movió); por eso cuenta como completada
+        $("k-ok").textContent = lista.filter(m => m.status === "COMPLETED" || m.status === "SUSPICIOUS").length;
         $("k-den").textContent = lista.filter(esDenegado).length;
         $("k-sos").textContent = lista.filter(m => m.suspicious).length;
     }

@@ -17,4 +17,9 @@ public final class EstadoCompletada implements EstadoTransaccion {
     public EstadoTransaccion marcarSospechosa() {
         return EstadoSospechosa.INSTANCIA;
     }
+
+    @Override
+    public boolean admiteSospecha() {
+        return true;
+    }
 }

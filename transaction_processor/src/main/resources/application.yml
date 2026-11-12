@@ -30,12 +30,19 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
+    consumer:
+      # Consume fraud_alerts para llevar la transacción al estado SOSPECHOSA
+      group-id: transaction-processor
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 ledger:
   rabbit:
     transfer-queue: transfer_commands
   kafka:
     transactions-topic: transactions_log
+    fraud-alerts-topic: fraud_alerts
   cuentas:
     # Las cuentas nuevas empiezan sin saldo: el usuario debe recargar antes de enviar
     saldo-inicial: ${LEDGER_SALDO_INICIAL:0}

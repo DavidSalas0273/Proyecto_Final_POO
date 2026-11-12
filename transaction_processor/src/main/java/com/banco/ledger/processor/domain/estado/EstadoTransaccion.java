@@ -29,6 +29,11 @@ public interface EstadoTransaccion {
         throw transicionInvalida("marcar como sospechosa");
     }
 
+    /** Indica si desde este estado se permite la transición a SOSPECHOSA (sin preguntar por el tipo). */
+    default boolean admiteSospecha() {
+        return false;
+    }
+
     private IllegalStateException transicionInvalida(String operacion) {
         return new IllegalStateException(
                 "No se puede " + operacion + " una transacción en estado " + codigo());

@@ -1,10 +1,10 @@
 package com.banco.ledger.fraud.infrastructure.persistence;
 
 import com.banco.ledger.fraud.application.port.RepositorioAlertasFraude;
-import com.banco.ledger.fraud.domain.contract.FraudAlertRecord;
+import com.banco.ledger.fraud.domain.model.RegistroAuditoria;
 import org.springframework.stereotype.Repository;
 
-/** Adaptador de persistencia de alertas (dominio -> tabla alertas_fraude). */
+/** Adaptador de persistencia: traduce el registro de auditoría a la tabla alertas_fraude. */
 @Repository
 public class RepositorioAlertasAdapter implements RepositorioAlertasFraude {
 
@@ -15,7 +15,7 @@ public class RepositorioAlertasAdapter implements RepositorioAlertasFraude {
     }
 
     @Override
-    public void registrar(FraudAlertRecord alerta) {
-        jpa.save(AlertaFraudeJpaEntity.desdeAlerta(alerta));
+    public void registrar(RegistroAuditoria registro) {
+        jpa.save(AlertaFraudeJpaEntity.desdeAlerta(registro.aAlerta()));
     }
 }

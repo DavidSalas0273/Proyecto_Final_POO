@@ -29,17 +29,33 @@ public class Transaccion {
     private Instant actualizadaEn;
 
     private Transaccion(TransactionId id, TipoMovimiento tipo, String origen, String destino,
-                        MontoDinero monto, Instant recibidaEn) {
+                        MontoDinero monto, Instant actualizadaEn, EstadoTransaccion estado, String motivo) {
         this.id = Objects.requireNonNull(id, "El id es obligatorio");
         this.tipo = Objects.requireNonNull(tipo, "El tipo es obligatorio");
         this.origen = origen;
         this.destino = requerirTexto(destino, "destino");
         this.monto = Objects.requireNonNull(monto, "El monto es obligatorio");
-        this.actualizadaEn = Objects.requireNonNull(recibidaEn, "La fecha de recepción es obligatoria");
+        this.actualizadaEn = Objects.requireNonNull(actualizadaEn, "La fecha es obligatoria");
+        this.estado = Objects.requireNonNull(estado, "El estado es obligatorio");
+        this.motivo = motivo;
         if (!monto.esPositivo()) {
             throw new IllegalArgumentException("El monto del movimiento debe ser mayor que cero");
         }
-        this.estado = EstadoRecibida.INSTANCIA;
+    }
+
+    private Transaccion(TransactionId id, TipoMovimiento tipo, String origen, String destino,
+                        MontoDinero monto, Instant recibidaEn) {
+        this(id, tipo, origen, destino, monto, recibidaEn, EstadoRecibida.INSTANCIA, null);
+    }
+
+    /**
+     * Reconstruye una transacción ya registrada en el ledger con su último estado, para
+     * poder aplicarle nuevas transiciones (por ejemplo, marcarla como sospechosa).
+     */
+    public static Transaccion reconstituir(TransactionId id, TipoMovimiento tipo, String origen, String destino,
+                                           MontoDinero monto, EstadoTransaccion estado, String motivo,
+                                           Instant actualizadaEn) {
+        return new Transaccion(id, tipo, origen, destino, monto, actualizadaEn, estado, motivo);
     }
 
     /** Transferencia P2P de {@code origen} a {@code destino}. */
@@ -92,6 +108,11 @@ public class Transaccion {
 
     public void rechazarPorFondosInsuficientes(Instant ahora) {
         rechazar(MOTIVO_FONDOS_INSUFICIENTES, ahora);
+    }
+
+    /** true solo si el estado actual permite pasar a SOSPECHOSA (es decir, está COMPLETADA). */
+    public boolean admiteMarcaDeSospecha() {
+        return estado.admiteSospecha();
     }
 
     public void marcarComoSospechosa(String motivoSospecha, Instant ahora) {

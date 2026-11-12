@@ -73,6 +73,11 @@ Cada servicio sigue una arquitectura hexagonal: `domain` (modelo y contratos), `
   - Cada comando (`TransferCommandRecord`, `DepositCommandRecord`) construye su propio agregado.
   - Las plantillas de correo se eligen con una tabla de estrategias por `TIPO:ESTADO`.
 - **State**: `EstadoTransaccion` con `EstadoRecibida → EstadoProcesando → EstadoCompletada → EstadoSospechosa` y `EstadoProcesando → EstadoRechazada`. Cada estado solo sobrescribe las transiciones que permite; las demás lanzan `IllegalStateException`, así que no hay `if/else` ni `switch` sobre el estado.
+  - El ciclo se cumple completo en ejecución. Cuando `fraud_detector` publica una alerta, `transaction_processor` la consume en `fraud_alerts` y reconstituye la `Transaccion` desde PostgreSQL. Luego aplica `marcarComoSospechosa()`, registra el nuevo estado en `historial_estados` y publica en el ledger un evento `SUSPICIOUS`.
+  - El asiento de `ledger_movimientos` nunca se modifica: los cambios de estado se agregan como filas nuevas al historial.
+- **`RegistroAuditoria`** (en `fraud_detector`): entidad rica de auditoría forense.
+  - Solo se puede abrir sobre una transferencia completada, y exige motivo y fecha.
+  - Es inmutable y genera la alerta pública con `aAlerta()`.
 - **Strategy**:
   - Validación de transacciones (`transaction_processor`): `DivisaCompatibleRegla`, `LimitePorTransaccionRegla` y `FondosSuficientesRegla`, combinadas en `CadenaValidacion`.
   - Detección de fraude (`fraud_detector`): `TransaccionAltoValorRegla` (> $10,000) y `FrecuenciaAnomalaRegla` (stateful, ventana deslizante), combinadas en `PoliticaDeteccionFraude`.
@@ -115,7 +120,7 @@ docker compose logs -f email_worker
 Para consultar la auditoría en PostgreSQL:
 
 ```bash
-docker exec -it postgres-db psql -U ledger -d ledger -c "SELECT * FROM ledger_movimientos; SELECT * FROM cuentas_bancarias; SELECT * FROM alertas_fraude;"
+docker exec -it postgres-db psql -U ledger -d ledger -c "SELECT * FROM ledger_movimientos; SELECT * FROM historial_estados; SELECT * FROM cuentas_bancarias; SELECT * FROM alertas_fraude;"
 ```
 
 La consola de RabbitMQ está en http://localhost:15672 (usuario `ledger`, contraseña `ledger`).

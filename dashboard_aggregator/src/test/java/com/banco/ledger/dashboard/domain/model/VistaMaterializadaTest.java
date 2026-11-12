@@ -107,6 +107,23 @@ class VistaMaterializadaTest {
     }
 
     @Test
+    void eventoSuspiciousDelLedgerMarcaLaFilaYConservaLosSaldos() {
+        // Arrange: transferencia completada con saldos
+        VistaMaterializada vista = new VistaMaterializada(10);
+        vista.aplicarTransaccion(conSaldos("tx-9", "TRANSFER", "C", "COMPLETED", "5000", "20000", T0));
+
+        // Act: el procesador publica el cambio de estado (sin saldos)
+        TransaccionVista fila = vista.aplicarTransaccion(new TransactionEventRecord("tx-9", "C", "B",
+                BigDecimal.TEN, "USD", "SUSPICIOUS", "HIGH_VALUE_TRANSACTION", T0.plusSeconds(2), "TRANSFER",
+                null, null));
+
+        // Assert
+        assertThat(fila.suspicious()).isTrue();
+        assertThat(fila.fraudReason()).isEqualTo("HIGH_VALUE_TRANSACTION");
+        assertThat(vista.cuentas()).extracting(c -> c.saldo().intValue()).containsExactly(20000, 5000);
+    }
+
+    @Test
     void capacidadInvalidaFallaRapido() {
         assertThatThrownBy(() -> new VistaMaterializada(0)).isInstanceOf(IllegalArgumentException.class);
     }

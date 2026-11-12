@@ -5,6 +5,7 @@ import com.banco.ledger.fraud.application.port.RepositorioAlertasFraude;
 import com.banco.ledger.fraud.domain.contract.FraudAlertRecord;
 import com.banco.ledger.fraud.domain.contract.TransactionEventRecord;
 import com.banco.ledger.fraud.domain.model.HistorialTransacciones;
+import com.banco.ledger.fraud.domain.model.RegistroAuditoria;
 import com.banco.ledger.fraud.domain.regla.PoliticaDeteccionFraude;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,17 +46,17 @@ public class DetectorFraude {
 
     private Optional<FraudAlertRecord> evaluar(TransactionEventRecord evento) {
         historial.registrar(evento.fromUser(), evento.timestamp());
-        Optional<FraudAlertRecord> alerta = politica.primerMotivoDeAlerta(evento, historial)
-                .map(motivo -> FraudAlertRecord.de(evento, motivo, clock.instant()));
-        alerta.ifPresentOrElse(this::registrarYPublicar,
+        Optional<RegistroAuditoria> registro = politica.primerMotivoDeAlerta(evento, historial)
+                .map(motivo -> RegistroAuditoria.abrirPorSospecha(evento, motivo, clock.instant()));
+        registro.ifPresentOrElse(this::auditarYPublicar,
                 () -> log.info("Transacción {} ({} {}) sin indicios de fraude",
                         evento.txId(), evento.amount(), evento.currency()));
-        return alerta;
+        return registro.map(RegistroAuditoria::aAlerta);
     }
 
-    private void registrarYPublicar(FraudAlertRecord alerta) {
-        log.warn("ALERTA DE FRAUDE {} -> {}", alerta.txId(), alerta.reason());
-        repositorio.registrar(alerta);
-        publicador.publicar(alerta);
+    private void auditarYPublicar(RegistroAuditoria registro) {
+        log.warn("ALERTA DE FRAUDE {} -> {}", registro.txId(), registro.motivo());
+        repositorio.registrar(registro);
+        publicador.publicar(registro.aAlerta());
     }
 }

@@ -1,6 +1,11 @@
 package com.banco.ledger.processor.infrastructure.persistence;
 
 import com.banco.ledger.processor.domain.contract.TransactionEventRecord;
+import com.banco.ledger.processor.domain.estado.CatalogoEstados;
+import com.banco.ledger.processor.domain.model.MontoDinero;
+import com.banco.ledger.processor.domain.model.TipoMovimiento;
+import com.banco.ledger.processor.domain.model.TransactionId;
+import com.banco.ledger.processor.domain.model.Transaccion;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -9,6 +14,7 @@ import org.hibernate.annotations.Immutable;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Optional;
 
 /**
  * Modelo de persistencia (tabla) separado del modelo de dominio.
@@ -73,5 +79,17 @@ public class TransaccionJpaEntity {
 
     public static TransaccionJpaEntity desdeEvento(TransactionEventRecord evento) {
         return new TransaccionJpaEntity(evento);
+    }
+
+    /**
+     * Reconstruye el agregado de dominio combinando el asiento inmutable con el estado
+     * vigente del historial (o el estado original del asiento si no hay historial).
+     */
+    public Transaccion aDominio(Optional<EstadoTransaccionJpaEntity> estadoVigente) {
+        String estado = estadoVigente.map(EstadoTransaccionJpaEntity::estado).orElse(status);
+        String motivo = estadoVigente.map(EstadoTransaccionJpaEntity::motivo).orElse(reason);
+        Instant fecha = estadoVigente.map(EstadoTransaccionJpaEntity::registradoEn).orElse(processedAt);
+        return Transaccion.reconstituir(new TransactionId(txId), TipoMovimiento.valueOf(type), fromUser, toUser,
+                new MontoDinero(amount, currency), CatalogoEstados.desdeCodigo(estado), motivo, fecha);
     }
 }

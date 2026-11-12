@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.FixedBackOff;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -49,5 +51,19 @@ public class ProcessorConfig {
     @Bean
     public NewTopic transactionsLogTopic(@Value("${ledger.kafka.transactions-topic}") String topic) {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();
+    }
+
+    @Bean
+    public NewTopic fraudAlertsTopic(@Value("${ledger.kafka.fraud-alerts-topic}") String topic) {
+        return TopicBuilder.name(topic).partitions(3).replicas(1).build();
+    }
+
+    /**
+     * Reintentos del consumidor de Kafka: si una alerta llega antes de que la transacción
+     * termine de guardarse, se reintenta 5 veces con 1 s de espera antes de descartarla.
+     */
+    @Bean
+    public DefaultErrorHandler kafkaErrorHandler() {
+        return new DefaultErrorHandler(new FixedBackOff(1000L, 5));
     }
 }

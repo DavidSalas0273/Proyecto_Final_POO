@@ -22,10 +22,17 @@ public record TransaccionVista(
         @JsonProperty("fraud_reason") String fraudReason,
         @JsonProperty("timestamp") Instant timestamp) {
 
+    public static final String ESTADO_SOSPECHOSA = "SUSPICIOUS";
+
+    /**
+     * Crea la fila a partir del evento del ledger. Si el ledger ya trae el estado
+     * SUSPICIOUS (publicado por el procesador tras la alerta), la fila nace marcada.
+     */
     public static TransaccionVista desde(TransactionEventRecord evento) {
+        boolean sospechosa = ESTADO_SOSPECHOSA.equals(evento.status());
         return new TransaccionVista(evento.txId(), evento.type(), evento.fromUser(), evento.toUser(),
                 evento.amount(), evento.currency(), evento.status(), evento.reason(), evento.fromBalance(),
-                evento.toBalance(), false, null, evento.timestamp());
+                evento.toBalance(), sospechosa, sospechosa ? evento.reason() : null, evento.timestamp());
     }
 
     public TransaccionVista marcarSospechosa(String motivo) {
