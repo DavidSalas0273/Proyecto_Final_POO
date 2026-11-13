@@ -15,7 +15,7 @@ import java.util.function.Function;
  * "TIPO:ESTADO" tiene su propia plantilla (tabla de estrategias, sin switch):
  * <ul>
  *   <li>TRANSFER:COMPLETED -> emisor ("Envió $50 a B") y receptor ("Recibió $50 de A").</li>
- *   <li>DEPOSIT:COMPLETED  -> titular ("Recargó $100").</li>
+ *   <li>DEPOSIT:COMPLETED  -> titular ("Recargó $100 en su cuenta. Saldo disponible: $100").</li>
  *   <li>TRANSFER:REJECTED / DEPOSIT:REJECTED -> aviso de operación denegada.</li>
  * </ul>
  */
@@ -46,11 +46,12 @@ public class PlantillaNotificaciones {
         return plantillas.getOrDefault(evento.clave(), e -> List.of()).apply(evento);
     }
 
+    /** Formato exacto del enunciado: { "to": "user_a@email.com", "body": "Envió $50 a B" }. */
     private List<EmailCommandRecord> transferenciaCompletada(TransactionEventRecord e) {
         String monto = formatear(e.amount(), e.currency());
         return List.of(
-                email(e.fromUser(), "Envió " + monto + " a " + e.toUser() + saldo(e.fromBalance(), e.currency())),
-                email(e.toUser(), "Recibió " + monto + " de " + e.fromUser() + saldo(e.toBalance(), e.currency())));
+                email(e.fromUser(), "Envió " + monto + " a " + e.toUser()),
+                email(e.toUser(), "Recibió " + monto + " de " + e.fromUser()));
     }
 
     private List<EmailCommandRecord> recargaCompletada(TransactionEventRecord e) {

@@ -153,6 +153,11 @@ PostgreSQL usa el 5433 para no chocar con un PostgreSQL instalado en Windows.
 
 No ejecutes `docker-compose.infra.yml` y `docker-compose.yml` a la vez, porque usan los mismos puertos.
 
+## Decisiones de interpretación del enunciado
+
+- **Publicidad y fan-out.** Los objetivos de aprendizaje dicen que *publicidad* reacciona a los eventos del ledger, pero la especificación de `ad_generator` lo define como una *tarea programada periódica*. Se siguió la especificación del microservicio: `ad_generator` usa `@Scheduled` y comparte con `notification_router` la cola `email_queue`. El fan-out sobre Kafka lo hacen `dashboard_aggregator`, `fraud_detector` y `notification_router`, como describen los flujos 1 y 2.
+- **Correos de transferencia.** Usan el formato exacto del ejemplo (`"Envió $50 a B"`). Los correos de recarga y de envío denegado, que el enunciado no define, sí incluyen el saldo disponible.
+
 ## Pruebas unitarias
 
 Las pruebas son JUnit 5 + Mockito con el patrón AAA. No arrancan Spring, ni bases de datos, ni brokers. Para ejecutarlas todas sin tener Maven instalado:

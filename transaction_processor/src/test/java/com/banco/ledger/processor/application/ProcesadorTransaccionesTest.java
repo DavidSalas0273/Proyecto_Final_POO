@@ -17,18 +17,20 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -40,22 +42,30 @@ class ProcesadorTransaccionesTest {
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:01Z");
     private static final Instant SOLICITADA = Instant.parse("2026-11-11T11:30:00Z");
 
+    // Puertos de persistencia y mensajería: dobles de prueba
     @Mock
     private TransaccionRepository transacciones;
     @Mock
     private CuentaRepository cuentas;
     @Mock
     private PublicadorEventosLedger publicador;
+    @Mock
+    private Clock clock;
 
+    // Lógica de dominio real (Spy): se prueban las reglas verdaderas, no un simulacro
+    @Spy
+    private CadenaValidacion validaciones = new CadenaValidacion(
+            List.of(new DivisaCompatibleRegla(), new FondosSuficientesRegla()));
+    @Spy
+    private PoliticaAperturaCuentas politica = new PoliticaAperturaCuentas(MontoDinero.cero("USD"));
+
+    @InjectMocks
     private ProcesadorTransacciones procesador;
 
     @BeforeEach
     void setUp() {
-        CadenaValidacion validaciones = new CadenaValidacion(
-                List.of(new DivisaCompatibleRegla(), new FondosSuficientesRegla()));
-        PoliticaAperturaCuentas politica = new PoliticaAperturaCuentas(MontoDinero.cero("USD"));
-        procesador = new ProcesadorTransacciones(transacciones, cuentas, publicador, validaciones, politica,
-                Clock.fixed(AHORA, ZoneOffset.UTC));
+        // lenient: la prueba de comando duplicado termina antes de consultar el reloj
+        lenient().when(clock.instant()).thenReturn(AHORA);
     }
 
     private static TransferCommandRecord transferencia(String monto) {

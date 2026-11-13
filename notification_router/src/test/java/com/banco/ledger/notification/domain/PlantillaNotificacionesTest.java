@@ -25,18 +25,18 @@ class PlantillaNotificacionesTest {
     }
 
     @Test
-    void transferenciaCompletadaNotificaEmisorYReceptorConSaldo() {
+    void transferenciaCompletadaUsaElFormatoExactoDelEnunciado() {
         // Act
         List<EmailCommandRecord> emails = plantilla.para(evento("TRANSFER", "A", "COMPLETED", null, "50", "150"));
 
         // Assert
         assertThat(emails).containsExactly(
-                new EmailCommandRecord("user_a@email.com", "Envió $50 a B. Saldo disponible: $50"),
-                new EmailCommandRecord("user_b@email.com", "Recibió $50 de A. Saldo disponible: $150"));
+                new EmailCommandRecord("user_a@email.com", "Envió $50 a B"),
+                new EmailCommandRecord("user_b@email.com", "Recibió $50 de A"));
     }
 
     @Test
-    void eventoAntiguoSinSaldosConservaElFormatoOriginal() {
+    void eventoAntiguoSinTipoSeTrataComoTransferencia() {
         List<EmailCommandRecord> emails = plantilla.para(evento(null, "A", "COMPLETED", null, null, null));
 
         assertThat(emails).first().isEqualTo(new EmailCommandRecord("user_a@email.com", "Envió $50 a B"));
