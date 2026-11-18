@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VistaMaterializadaTest {
-
     private static final Instant T0 = Instant.parse("2026-11-11T11:31:02Z");
 
     private static TransactionEventRecord evento(String txId, String monto) {
@@ -27,13 +26,10 @@ class VistaMaterializadaTest {
 
     @Test
     void transaccionNuevaApareceSinMarcaDeFraude() {
-        // Arrange
         VistaMaterializada vista = new VistaMaterializada(10);
 
-        // Act
         TransaccionVista fila = vista.aplicarTransaccion(evento("tx-1", "50"));
 
-        // Assert
         assertThat(fila.suspicious()).isFalse();
         assertThat(vista.instantanea()).containsExactly(fila);
     }
@@ -81,14 +77,11 @@ class VistaMaterializadaTest {
 
     @Test
     void losEventosActualizanLosSaldosDeLasCuentas() {
-        // Arrange
         VistaMaterializada vista = new VistaMaterializada(10);
 
-        // Act: recarga a B y luego transferencia denegada de A a B
         vista.aplicarTransaccion(conSaldos("tx-r", "DEPOSIT", null, "COMPLETED", null, "100", T0));
         vista.aplicarTransaccion(conSaldos("tx-t", "TRANSFER", "A", "REJECTED", "0", "100", T0.plusSeconds(5)));
 
-        // Assert
         assertThat(vista.cuentas())
                 .extracting(SaldoCuenta::usuario, c -> c.saldo().intValue())
                 .containsExactly(
@@ -108,16 +101,13 @@ class VistaMaterializadaTest {
 
     @Test
     void eventoSuspiciousDelLedgerMarcaLaFilaYConservaLosSaldos() {
-        // Arrange: transferencia completada con saldos
         VistaMaterializada vista = new VistaMaterializada(10);
         vista.aplicarTransaccion(conSaldos("tx-9", "TRANSFER", "C", "COMPLETED", "5000", "20000", T0));
 
-        // Act: el procesador publica el cambio de estado (sin saldos)
         TransaccionVista fila = vista.aplicarTransaccion(new TransactionEventRecord("tx-9", "C", "B",
                 BigDecimal.TEN, "USD", "SUSPICIOUS", "HIGH_VALUE_TRANSACTION", T0.plusSeconds(2), "TRANSFER",
                 null, null));
 
-        // Assert
         assertThat(fila.suspicious()).isTrue();
         assertThat(fila.fraudReason()).isEqualTo("HIGH_VALUE_TRANSACTION");
         assertThat(vista.cuentas()).extracting(c -> c.saldo().intValue()).containsExactly(20000, 5000);

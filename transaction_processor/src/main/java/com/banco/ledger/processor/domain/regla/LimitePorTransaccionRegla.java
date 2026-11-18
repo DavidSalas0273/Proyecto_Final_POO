@@ -7,9 +7,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Rechaza movimientos que superan el límite operativo por transacción. */
 public class LimitePorTransaccionRegla implements ReglaValidacionTransaccion {
-
     public static final String MOTIVO = "AMOUNT_LIMIT_EXCEEDED";
 
     private final BigDecimal limite;

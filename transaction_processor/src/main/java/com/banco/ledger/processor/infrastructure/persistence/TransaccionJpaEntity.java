@@ -16,15 +16,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Optional;
 
-/**
- * Modelo de persistencia (tabla) separado del modelo de dominio.
- * @Immutable: el histórico del ledger es de solo inserción.
- */
 @Entity
 @Immutable
 @Table(name = "ledger_movimientos")
 public class TransaccionJpaEntity {
-
     @Id
     @Column(name = "tx_id", length = 64)
     private String txId;
@@ -60,7 +55,6 @@ public class TransaccionJpaEntity {
     private Instant processedAt;
 
     protected TransaccionJpaEntity() {
-        // requerido por JPA
     }
 
     private TransaccionJpaEntity(TransactionEventRecord evento) {
@@ -81,10 +75,6 @@ public class TransaccionJpaEntity {
         return new TransaccionJpaEntity(evento);
     }
 
-    /**
-     * Reconstruye el agregado de dominio combinando el asiento inmutable con el estado
-     * vigente del historial (o el estado original del asiento si no hay historial).
-     */
     public Transaccion aDominio(Optional<EstadoTransaccionJpaEntity> estadoVigente) {
         String estado = estadoVigente.map(EstadoTransaccionJpaEntity::estado).orElse(status);
         String motivo = estadoVigente.map(EstadoTransaccionJpaEntity::motivo).orElse(reason);

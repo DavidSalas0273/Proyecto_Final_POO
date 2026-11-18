@@ -19,10 +19,8 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.util.List;
 
-/** Composición de dependencias: aquí se eligen las estrategias concretas del dominio. */
 @Configuration
 public class ProcessorConfig {
-
     @Bean
     public Clock clock() {
         return Clock.systemUTC();
@@ -43,25 +41,25 @@ public class ProcessorConfig {
         return new PoliticaAperturaCuentas(new MontoDinero(saldoInicial, divisaBase));
     }
 
+    // RabbitMQ: declara la cola durable transfer_commands
     @Bean
     public Queue transferCommandsQueue(@Value("${ledger.rabbit.transfer-queue}") String queue) {
         return new Queue(queue, true);
     }
 
+    // Kafka: crea el topic transactions_log (3 particiones) si no existe
     @Bean
     public NewTopic transactionsLogTopic(@Value("${ledger.kafka.transactions-topic}") String topic) {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();
     }
 
+    // Kafka: crea el topic fraud_alerts (3 particiones) si no existe
     @Bean
     public NewTopic fraudAlertsTopic(@Value("${ledger.kafka.fraud-alerts-topic}") String topic) {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();
     }
 
-    /**
-     * Reintentos del consumidor de Kafka: si una alerta llega antes de que la transacción
-     * termine de guardarse, se reintenta 5 veces con 1 s de espera antes de descartarla.
-     */
+    // Kafka: reintentos del consumidor (5 intentos con 1 s de espera)
     @Bean
     public DefaultErrorHandler kafkaErrorHandler() {
         return new DefaultErrorHandler(new FixedBackOff(1000L, 5));

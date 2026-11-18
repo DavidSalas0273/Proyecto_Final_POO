@@ -12,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DepositCommandRecordTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:00Z");
 
     @Test

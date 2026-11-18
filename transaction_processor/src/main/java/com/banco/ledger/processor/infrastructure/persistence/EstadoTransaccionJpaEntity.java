@@ -12,15 +12,10 @@ import org.hibernate.annotations.Immutable;
 
 import java.time.Instant;
 
-/**
- * Historial de estados de cada transacción (tabla historial_estados).
- * Solo inserción: el estado vigente es la fila más reciente de cada tx_id.
- */
 @Entity
 @Immutable
 @Table(name = "historial_estados", indexes = @Index(name = "idx_historial_tx", columnList = "tx_id"))
 public class EstadoTransaccionJpaEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,7 +33,6 @@ public class EstadoTransaccionJpaEntity {
     private Instant registradoEn;
 
     protected EstadoTransaccionJpaEntity() {
-        // requerido por JPA
     }
 
     private EstadoTransaccionJpaEntity(TransactionEventRecord asiento) {

@@ -18,13 +18,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Adaptador WebSocket: al conectarse, el cliente recibe la instantánea completa;
- * después recibe cada actualización (UPSERT) en tiempo real.
- */
 @Component
 public class DashboardWebSocketHandler extends TextWebSocketHandler implements DifusorDashboard {
-
     private static final Logger log = LoggerFactory.getLogger(DashboardWebSocketHandler.class);
     private static final int TIEMPO_ENVIO_MS = 5_000;
     private static final int BUFFER_BYTES = 512 * 1024;

@@ -8,16 +8,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-/**
- * Adaptador de persistencia del ledger:
- * <ul>
- *   <li>ledger_movimientos: un asiento inmutable por movimiento.</li>
- *   <li>historial_estados: cada estado por el que pasa la transacción (auditoría).</li>
- * </ul>
- */
 @Repository
 public class TransaccionRepositoryAdapter implements TransaccionRepository {
-
     private final SpringDataTransaccionRepository ledger;
     private final SpringDataEstadoRepository historial;
 

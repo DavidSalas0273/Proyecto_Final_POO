@@ -6,9 +6,7 @@ import com.banco.ledger.fraud.domain.model.HistorialTransacciones;
 import java.util.List;
 import java.util.Optional;
 
-/** Conjunto ordenado de estrategias de detección: devuelve el primer motivo de alerta. */
 public class PoliticaDeteccionFraude {
-
     private final List<ReglaDeteccionFraude> reglas;
 
     public PoliticaDeteccionFraude(List<ReglaDeteccionFraude> reglas) {

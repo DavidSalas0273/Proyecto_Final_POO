@@ -7,10 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/** Adaptador de entrada: consume transactions_log (grupo notification-router). */
 @Component
 public class TransactionsLogListener {
-
     private final EnrutadorNotificaciones enrutador;
     private final ObjectMapper objectMapper;
 
@@ -19,6 +17,7 @@ public class TransactionsLogListener {
         this.objectMapper = objectMapper;
     }
 
+    // Kafka: consume el topic transactions_log (grupo notification-router)
     @KafkaListener(topics = "${ledger.kafka.transactions-topic}")
     public void alRecibirEvento(String payload) throws JsonProcessingException {
         enrutador.enrutar(objectMapper.readValue(payload, TransactionEventRecord.class));

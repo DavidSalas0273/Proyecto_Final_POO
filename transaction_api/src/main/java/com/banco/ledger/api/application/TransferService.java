@@ -9,13 +9,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.Clock;
 
-/**
- * Casos de uso de entrada: solicitar una transferencia P2P o una recarga de saldo.
- * Todas las dependencias se inyectan por constructor y son interfaces (DIP).
- */
 @Service
 public class TransferService {
-
     private final TransferCommandPublisher publisher;
     private final TxIdGenerator txIdGenerator;
     private final Clock clock;

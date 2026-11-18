@@ -5,9 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Verifica el contrato JSON polimórfico de la cola transfer_commands. */
 class ComandoLedgerJsonTest {
-
     private final ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
 
     @Test

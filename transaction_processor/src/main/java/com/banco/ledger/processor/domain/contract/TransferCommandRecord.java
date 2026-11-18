@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Comando de transferencia P2P (validación Fail-Fast). */
 public record TransferCommandRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("from_user") String fromUser,
@@ -16,7 +15,6 @@ public record TransferCommandRecord(
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("currency") String currency,
         @JsonProperty("requested_at") Instant requestedAt) implements ComandoLedger {
-
     public TransferCommandRecord {
         txId = requerirTexto(txId, "tx_id");
         fromUser = requerirTexto(fromUser, "from_user");

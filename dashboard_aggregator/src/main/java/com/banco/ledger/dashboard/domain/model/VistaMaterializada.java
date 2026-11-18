@@ -14,17 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-/**
- * Estado en memoria del agregador: proyección de transactions_log + fraud_alerts.
- * <ul>
- *   <li>Movimientos: lista de transacciones/recargas con su marca de fraude.</li>
- *   <li>Cuentas: saldo vigente de cada usuario, tomado de los eventos del ledger.</li>
- * </ul>
- * Como los dos topics se consumen en paralelo, una alerta puede llegar antes que su
- * transacción: se guarda como pendiente y se aplica cuando llega el evento.
- */
 public class VistaMaterializada {
-
     private final int capacidad;
     private final LinkedHashMap<String, TransaccionVista> transacciones = new LinkedHashMap<>();
     private final Map<String, String> alertasPendientes = new HashMap<>();
@@ -59,14 +49,12 @@ public class VistaMaterializada {
         return actualizada;
     }
 
-    /** Copia inmutable con los movimientos más recientes primero. */
     public synchronized List<TransaccionVista> instantanea() {
         List<TransaccionVista> copia = new ArrayList<>(transacciones.values());
         Collections.reverse(copia);
         return List.copyOf(copia);
     }
 
-    /** Copia inmutable de los saldos, ordenada por usuario. */
     public synchronized List<SaldoCuenta> cuentas() {
         return List.copyOf(cuentas.values());
     }

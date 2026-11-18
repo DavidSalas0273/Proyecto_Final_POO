@@ -14,7 +14,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class CadenaValidacionTest {
-
     private static final Instant T0 = Instant.parse("2026-11-11T11:30:00Z");
 
     private final CadenaValidacion cadena = new CadenaValidacion(List.of(

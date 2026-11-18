@@ -14,7 +14,6 @@ import java.util.UUID;
 
 @Configuration
 public class AppConfig implements WebMvcConfigurer {
-
     @Bean
     public Clock clock() {
         return Clock.systemUTC();
@@ -30,7 +29,6 @@ public class AppConfig implements WebMvcConfigurer {
         return new PoliticaSesion(Duration.ofMinutes(minutos));
     }
 
-    /** Permite que las páginas del cliente (abiertas como archivo local) llamen a la API. */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/transfer").allowedOrigins("*").allowedMethods("POST", "OPTIONS");

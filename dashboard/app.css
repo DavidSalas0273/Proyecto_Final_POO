@@ -1,12 +1,3 @@
-/*
- * Ledger · banca en línea (dashboard)
- * Estructura de banca empresarial: menú lateral con accesos rápidos, perfil y opciones;
- * barra superior con la marca; cada opción abre una vista (#inicio, #movimientos, ...).
- * Identidad: tinta azul marino + verde billete + roseta guilloché en el estado de cuenta.
- * Gráficos: SVG propio; la paleta de series se validó con el validador de dataviz.
- * Movimiento (Emil Kowalski): ease-out fuerte, scale(.97) al presionar, transiciones
- * interrumpibles, el menú móvil entra con curva de cajón, hover solo con puntero fino.
- */
 :root {
   --ink: #10233a;
   --paper: #f3f5f7;
@@ -30,7 +21,7 @@
   --warn-soft: #fbf0df;
   --danger: #b3261e;
   --danger-soft: #fbeceb;
-  /* Series de gráficos (validadas sobre #ffffff) */
+
   --serie-ok: #0f8a62;
   --serie-warn: #c27c0e;
   --serie-danger: #c0392b;
@@ -82,11 +73,9 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .icono-svg { width: 20px; height: 20px; flex: none; }
 
-/* ======================= Estructura ======================= */
 .app { display: grid; grid-template-columns: var(--ancho-lateral) minmax(0, 1fr); min-height: 100%; }
 .app.compacta { --ancho-lateral: 84px; }
 
-/* ---------- Menú lateral ---------- */
 .lateral {
   position: sticky; top: 0; height: 100vh; height: 100dvh;
   overflow-y: auto;
@@ -140,14 +129,12 @@ a { color: var(--accent); text-underline-offset: 3px; }
 @media (hover: hover) and (pointer: fine) { .lateral-pie button:hover { background: var(--surface); } }
 .lateral-pie .icono-svg { color: var(--muted); }
 
-/* Menú compacto (escritorio): solo iconos */
 .app.compacta .accesos { grid-template-columns: 52px; }
 .app.compacta .acceso-rapido:nth-child(n+4) { display: none; }
 .app.compacta .perfil span, .app.compacta .etiqueta, .app.compacta .contador { display: none; }
 .app.compacta .perfil b { font-size: 13px; }
 .app.compacta .menu a, .app.compacta .lateral-pie button { justify-content: center; }
 
-/* ---------- Contenido ---------- */
 .contenido { min-width: 0; display: flex; flex-direction: column; }
 .barra {
   position: sticky; top: 0; z-index: 4;
@@ -177,7 +164,6 @@ main.vistas { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 56px 24px
 .vista-titulo { margin: 0 0 4px; font-size: 26px; font-weight: 650; letter-spacing: -0.02em; }
 .vista-sub { margin: 0 0 20px; color: var(--muted); max-width: 70ch; }
 
-/* ---------- Paneles ---------- */
 .panel {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 20px; min-width: 0; display: flex; flex-direction: column; gap: 14px;
@@ -188,7 +174,6 @@ main.vistas { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 56px 24px
 .panel-cabecera a { color: var(--accent); font-weight: 600; }
 .vacio { color: var(--muted); text-align: center; padding: 18px 8px; margin: 0; }
 
-/* ======================= Inicio ======================= */
 .rejilla-inicio {
   display: grid; gap: 16px;
   grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -211,7 +196,6 @@ main.vistas { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 56px 24px
   .rejilla-inicio { grid-template-columns: minmax(0, 1fr); grid-template-areas: "saldo" "actividad" "t1" "t2" "t3" "t4" "ultimos"; }
 }
 
-/* Estado de cuenta: tinta + roseta */
 .saldo {
   position: relative; overflow: hidden; isolation: isolate;
   background: var(--ink); color: var(--on-ink); border-color: var(--ink);
@@ -231,7 +215,6 @@ main.vistas { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 56px 24px
 .saldo-acciones a:active { transform: scale(0.97); }
 @media (hover: hover) and (pointer: fine) { .saldo-acciones a:hover { background: rgba(242, 245, 242, 0.18); } }
 
-/* Tu actividad */
 .actividad-texto { margin: 0; font-size: 15px; }
 .actividad-texto b { font-weight: 650; }
 .dona-envoltura { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 18px; align-items: center; }
@@ -253,7 +236,6 @@ main.vistas { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 56px 24px
 .cifra small { color: var(--muted); font-weight: 400; margin-left: 6px; }
 .muestra { width: 10px; height: 10px; border-radius: 3px; flex: none; display: inline-block; }
 
-/* Tarjetas con porcentajes */
 .tarjeta { gap: 10px; }
 .tarjeta-cabecera { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 14px; font-weight: 600; }
 .tarjeta-icono { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; flex: none; }
@@ -271,7 +253,6 @@ main.vistas { padding: 24px max(24px, env(safe-area-inset-right, 0px)) 56px 24px
   transform-origin: left; transform: scaleX(0); transition: transform 400ms var(--ease-out);
 }
 
-/* ======================= Movimientos (registro) ======================= */
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; }
 .filtros { display: flex; flex-wrap: wrap; gap: 6px; }
 .filtros button {
@@ -315,7 +296,7 @@ ul.movs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-
 .badge.REJECTED { background: var(--warn-soft); color: var(--warn); }
 .badge.SUSPICIOUS { background: var(--danger); color: #fff; }
 .badge.sim { background: var(--surface-2); color: var(--muted); border: 1px solid var(--line-soft); }
-/* Sospechosa: resaltada en rojo con signo de alerta */
+
 .mov.sospechosa { background: var(--danger-soft); border-bottom-color: transparent; }
 .mov.sospechosa .icono { background: var(--danger); color: #fff; border-color: transparent; }
 .mov.sospechosa .info b, .mov.sospechosa .motivo { color: var(--danger); }
@@ -323,7 +304,6 @@ ul.movs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-
 @keyframes resaltar { from { background-color: var(--accent-soft); } }
 .lista-scroll { max-height: 640px; overflow-y: auto; margin: 0 -8px; padding: 0 8px; }
 
-/* ======================= Mover dinero ======================= */
 .rejilla-mover { display: grid; gap: 16px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
 @media (max-width: 1000px) { .rejilla-mover { grid-template-columns: minmax(0, 1fr); } }
 .saldo-mini { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 14px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line-soft); }
@@ -373,7 +353,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .btn:disabled { opacity: 0.6; cursor: progress; }
 .btn.compacto { height: 40px; width: auto; padding: 0 16px; }
 
-/* Barras de saldo por cuenta (también para elegir destinatario) */
 .barras { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .barra {
   width: 100%; display: grid; gap: 6px; padding: 8px 10px; border: 1px solid transparent; border-radius: 8px;
@@ -390,7 +369,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .relleno { display: block; height: 100%; width: 100%; border-radius: 4px; background: var(--serie-ok); transform-origin: left; transform: scaleX(0); transition: transform 400ms var(--ease-out); }
 .nota { margin: 0; color: var(--muted); font-size: 13px; }
 
-/* ======================= Alertas ======================= */
 .resumen-alertas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
 .resumen-alertas .panel { flex-direction: row; align-items: center; gap: 14px; }
 .signo { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; flex: none; }
@@ -410,7 +388,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .alerta-fila p { margin: 3px 0 0; font-size: 14px; }
 .alerta-fila small { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
 
-/* Aviso de alerta en pantalla */
 .alertas-pantalla {
   position: fixed; z-index: 30;
   top: max(16px, env(safe-area-inset-top, 0px));
@@ -439,7 +416,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .alerta-acciones button:active { transform: scale(0.97); }
 .alerta-acciones button.principal { background: var(--primario); color: var(--on-primario); border-color: var(--primario); }
 
-/* ======================= Simulador ======================= */
 .escenarios { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-bottom: 16px; }
 .escenario { justify-content: space-between; }
 .escenario p { margin: 0; color: var(--muted); font-size: 14px; }
@@ -475,7 +451,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .veredicto.ok { color: var(--ok); }
 .veredicto.mal { color: var(--danger); }
 
-/* ======================= Análisis ======================= */
 .rejilla-analisis { display: grid; gap: 16px; grid-template-columns: repeat(12, minmax(0, 1fr)); }
 .kpis-globales { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 760px) { .kpis-globales { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -496,7 +471,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .tooltip b { display: block; font-weight: 650; }
 .tooltip span { color: var(--on-ink-muted); }
 
-/* ======================= Avisos breves ======================= */
 #toasts {
   position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
   display: grid; gap: 8px; z-index: 20; max-width: min(360px, calc(100vw - 32px));
@@ -512,7 +486,6 @@ input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px v
 .toast.warn { background: var(--warn); color: #fff; }
 .toast.danger { background: var(--danger); color: #fff; }
 
-/* ======================= Móvil: menú como cajón ======================= */
 .velo { position: fixed; inset: 0; z-index: 9; background: rgba(10, 26, 44, 0.45); opacity: 0; transition: opacity 260ms ease; }
 .velo.visible { opacity: 1; }
 @media (max-width: 900px) {

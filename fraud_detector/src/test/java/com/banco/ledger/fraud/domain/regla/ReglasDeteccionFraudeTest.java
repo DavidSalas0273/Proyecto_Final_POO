@@ -13,7 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReglasDeteccionFraudeTest {
-
     private static final Instant T0 = Instant.parse("2026-11-11T11:31:00Z");
 
     static TransactionEventRecord evento(String txId, String monto, Instant momento) {
@@ -22,11 +21,9 @@ class ReglasDeteccionFraudeTest {
 
     @Test
     void altoValorDisparaAlertaSoloPorEncimaDelUmbral() {
-        // Arrange
         TransaccionAltoValorRegla regla = new TransaccionAltoValorRegla(new BigDecimal("10000"));
         HistorialTransacciones historial = new HistorialTransacciones(Duration.ofMinutes(1));
 
-        // Act & Assert
         assertThat(regla.evaluar(evento("tx-1", "50", T0), historial)).isEmpty();
         assertThat(regla.evaluar(evento("tx-2", "10000", T0), historial)).isEmpty();
         assertThat(regla.evaluar(evento("tx-3", "20000", T0), historial))
@@ -35,7 +32,6 @@ class ReglasDeteccionFraudeTest {
 
     @Test
     void frecuenciaAnomalaDetectaRafagasDentroDeLaVentana() {
-        // Arrange
         HistorialTransacciones historial = new HistorialTransacciones(Duration.ofSeconds(60));
         FrecuenciaAnomalaRegla regla = new FrecuenciaAnomalaRegla(3, Duration.ofSeconds(60));
         for (int i = 0; i < 3; i++) {
@@ -43,7 +39,6 @@ class ReglasDeteccionFraudeTest {
         }
         TransactionEventRecord tercera = evento("tx-3", "10", T0.plusSeconds(2));
 
-        // Act & Assert
         assertThat(regla.evaluar(tercera, historial)).isEmpty();
 
         historial.registrar("A", T0.plusSeconds(3));

@@ -7,9 +7,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 import java.util.Optional;
 
-/** Alerta cuando el monto supera el umbral configurado (por defecto $10,000). */
 public class TransaccionAltoValorRegla implements ReglaDeteccionFraude {
-
     public static final String MOTIVO = "HIGH_VALUE_TRANSACTION";
 
     private final BigDecimal umbral;

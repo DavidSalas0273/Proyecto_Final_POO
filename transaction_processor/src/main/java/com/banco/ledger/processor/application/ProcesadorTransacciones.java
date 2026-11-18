@@ -18,14 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.util.Optional;
 
-/**
- * Orquestador del caso de uso "procesar movimiento" (transferencia o recarga).
- * Comando -> reglas de dominio -> persistencia (PostgreSQL) -> evento (Kafka).
- * Solo conoce puertos (interfaces); los adaptadores se inyectan por constructor.
- */
 @Service
 public class ProcesadorTransacciones {
-
     private static final Logger log = LoggerFactory.getLogger(ProcesadorTransacciones.class);
 
     private final TransaccionRepository transacciones;

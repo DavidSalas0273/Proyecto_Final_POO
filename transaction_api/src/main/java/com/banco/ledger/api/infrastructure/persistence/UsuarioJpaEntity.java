@@ -8,11 +8,9 @@ import jakarta.persistence.Table;
 
 import java.time.Instant;
 
-/** Tabla usuarios. Modelo de persistencia separado de la entidad de dominio Usuario. */
 @Entity
 @Table(name = "usuarios")
 public class UsuarioJpaEntity {
-
     @Id
     @Column(name = "usuario", length = 20)
     private String usuario;
@@ -39,7 +37,6 @@ public class UsuarioJpaEntity {
     private Instant bloqueadoHasta;
 
     protected UsuarioJpaEntity() {
-        // requerido por JPA
     }
 
     private UsuarioJpaEntity(Usuario u) {
@@ -56,7 +53,6 @@ public class UsuarioJpaEntity {
         return new UsuarioJpaEntity(usuario);
     }
 
-    /** Solo el estado de seguridad cambia después del registro. */
     public void sincronizarCon(Usuario u) {
         this.intentosFallidos = u.intentosFallidos();
         this.bloqueadoHasta = u.bloqueadoHasta().orElse(null);

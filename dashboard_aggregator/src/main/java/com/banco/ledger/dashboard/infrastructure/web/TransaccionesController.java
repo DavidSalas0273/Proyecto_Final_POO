@@ -9,11 +9,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Consultas (lado Query de CQRS) de la vista materializada. */
 @RestController
 @CrossOrigin(origins = "*")
 public class TransaccionesController {
-
     private final VistaMaterializada vista;
 
     public TransaccionesController(VistaMaterializada vista) {

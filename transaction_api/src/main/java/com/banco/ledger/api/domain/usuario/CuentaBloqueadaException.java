@@ -2,9 +2,7 @@ package com.banco.ledger.api.domain.usuario;
 
 import java.time.Instant;
 
-/** El acceso está bloqueado temporalmente por demasiados intentos fallidos. */
 public class CuentaBloqueadaException extends RuntimeException {
-
     private final transient Instant hasta;
 
     public CuentaBloqueadaException(Instant hasta) {

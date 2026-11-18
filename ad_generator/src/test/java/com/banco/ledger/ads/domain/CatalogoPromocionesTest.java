@@ -8,13 +8,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CatalogoPromocionesTest {
-
     @Test
     void rotaLasPromocionesDeFormaCircular() {
-        // Arrange
         CatalogoPromociones catalogo = new CatalogoPromociones(List.of("P1", "P2"));
 
-        // Act & Assert
         assertThat(catalogo.siguientePromocion()).isEqualTo("P1");
         assertThat(catalogo.siguientePromocion()).isEqualTo("P2");
         assertThat(catalogo.siguientePromocion()).isEqualTo("P1");

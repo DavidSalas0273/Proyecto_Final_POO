@@ -1,9 +1,3 @@
-/*
- * Ledger · lógica compartida del login y el registro.
- * - Sesión en sessionStorage (se borra al cerrar la pestaña, como en la banca en línea).
- * - Validación en el cliente idéntica a la del servidor (DatosRegistro.java).
- * - Roseta guilloché dibujada en <canvas> una sola vez al cargar.
- */
 (function () {
   "use strict";
 
@@ -12,7 +6,6 @@
   const CLAVE_AVISO = "ledger.aviso";
   const reducirMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // ---------------- Sesión ----------------
   const Sesion = {
     leer() {
       try {
@@ -21,7 +14,7 @@
       } catch (e) { return null; }
     },
     guardar(s) {
-      try { sessionStorage.setItem(CLAVE_SESION, JSON.stringify(s)); } catch (e) { /* sin almacenamiento */ }
+      try { sessionStorage.setItem(CLAVE_SESION, JSON.stringify(s)); } catch (e) {  }
     },
     tomarAviso() {
       try {
@@ -32,7 +25,6 @@
     }
   };
 
-  // Si ya hay una sesión vigente, no tiene sentido volver a ingresar
   if (Sesion.leer()) {
     location.replace("dashboard.html");
     return;
@@ -40,24 +32,20 @@
 
   const $ = (sel, raiz = document) => raiz.querySelector(sel);
 
-  // ---------------- Roseta guilloché (guilloche.js) ----------------
-  // La roseta "se sale" por la esquina superior derecha, como en un billete, y deja
-  // libre la mitad inferior del panel, donde va el texto.
   function guilloche(canvas) {
     window.Guilloche.montar(canvas, {
-      geometria: (ancho, alto) => window.matchMedia("(max-width: 960px)").matches // mismo corte que el CSS
+      geometria: (ancho, alto) => window.matchMedia("(max-width: 960px)").matches
         ? { x: ancho * 0.86, y: alto * 0.38, escala: ancho * 0.42 }
         : { x: ancho * 0.98, y: alto * 0.06, escala: ancho * 0.38 }
     });
   }
 
-  // ---------------- Utilidades de formulario ----------------
   function mostrarErrorCampo(input, mensaje) {
     const error = document.getElementById(input.id + "-error");
     input.setAttribute("aria-invalid", mensaje ? "true" : "false");
     if (!error) return;
     error.textContent = mensaje || "";
-    void error.offsetHeight; // fija el estado inicial para que la transición se vea
+    void error.offsetHeight;
     error.classList.toggle("visible", Boolean(mensaje));
   }
 
@@ -66,8 +54,7 @@
     alerta.className = "alerta" + (tipo ? " " + tipo : "");
     alerta.textContent = texto;
     alerta.hidden = false;
-    // Forzar un reflow aplica el estado inicial antes de la transición. A diferencia de
-    // requestAnimationFrame, funciona también si la pestaña está en segundo plano.
+
     void alerta.offsetHeight;
     alerta.classList.add("visible");
   }
@@ -107,11 +94,10 @@
   function entrar(sesion, boton) {
     Sesion.guardar(sesion);
     boton.classList.add("listo");
-    // Pequeña pausa para que se lea la confirmación del botón antes de cambiar de página
+
     setTimeout(() => location.assign("dashboard.html"), reducirMovimiento ? 0 : 450);
   }
 
-  // Mostrar / ocultar contraseña y aviso de mayúsculas activadas
   document.querySelectorAll("[data-mostrar]").forEach(boton => {
     const input = document.getElementById(boton.dataset.mostrar);
     boton.addEventListener("click", () => {
@@ -135,7 +121,6 @@
     input.addEventListener("blur", () => aviso.classList.remove("visible"));
   });
 
-  // ---------------- Login ----------------
   function iniciarLogin() {
     const form = $("#form-login");
     const boton = $("button[type=submit]", form);
@@ -171,7 +156,6 @@
     });
   }
 
-  // ---------------- Registro ----------------
   const REGLAS = {
     nombre: v => v.trim().replace(/\s+/g, " ").length >= 3 ? "" : "Escribe tu nombre completo.",
     documento: v => /^\d{6,12}$/.test(v.replace(/[.\s-]/g, "")) ? "" : "Usa entre 6 y 12 dígitos, sin letras.",
@@ -212,7 +196,6 @@
       return !mensaje;
     }
 
-    // Se valida al salir del campo (no mientras se escribe), y en vivo solo si ya tenía error
     Object.keys(REGLAS).forEach(nombre => {
       const input = form[nombre];
       const evento = input.type === "checkbox" ? "change" : "blur";
@@ -267,7 +250,6 @@
     });
   }
 
-  // ---------------- Arranque ----------------
   guilloche($(".marca canvas"));
   ({ login: iniciarLogin, registro: iniciarRegistro })[document.body.dataset.pagina]();
 })();

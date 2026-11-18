@@ -7,10 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/** Adaptador de entrada: consume el ledger transactions_log. */
 @Component
 public class TransactionsLogListener {
-
     private final DetectorFraude detector;
     private final ObjectMapper objectMapper;
 
@@ -19,6 +17,7 @@ public class TransactionsLogListener {
         this.objectMapper = objectMapper;
     }
 
+    // Kafka: consume el topic transactions_log (grupo fraud-detector)
     @KafkaListener(topics = "${ledger.kafka.transactions-topic}")
     public void alRecibirEvento(String payload) throws JsonProcessingException {
         detector.analizar(objectMapper.readValue(payload, TransactionEventRecord.class));

@@ -12,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PlantillaNotificacionesTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:02Z");
 
     private final PlantillaNotificaciones plantilla = new PlantillaNotificaciones("email.com");
@@ -26,10 +25,8 @@ class PlantillaNotificacionesTest {
 
     @Test
     void transferenciaCompletadaUsaElFormatoExactoDelEnunciado() {
-        // Act
         List<EmailCommandRecord> emails = plantilla.para(evento("TRANSFER", "A", "COMPLETED", null, "50", "150"));
 
-        // Assert
         assertThat(emails).containsExactly(
                 new EmailCommandRecord("user_a@email.com", "Envió $50 a B"),
                 new EmailCommandRecord("user_b@email.com", "Recibió $50 de A"));

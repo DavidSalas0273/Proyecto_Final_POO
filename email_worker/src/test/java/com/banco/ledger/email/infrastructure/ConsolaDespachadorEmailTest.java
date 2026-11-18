@@ -11,18 +11,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ConsolaDespachadorEmailTest {
-
     @Test
     void imprimeElFormatoEsperado() {
-        // Arrange
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         ConsolaDespachadorEmail despachador =
                 new ConsolaDespachadorEmail(new PrintStream(buffer, true, StandardCharsets.UTF_8), 0);
 
-        // Act
         despachador.despachar(new EmailCommandRecord("user_a@email.com", "Envió $50 a B"));
 
-        // Assert
         assertThat(buffer.toString(StandardCharsets.UTF_8).trim())
                 .isEqualTo("ENVIANDO EMAIL a user_a@email.com: Envió $50 a B");
     }

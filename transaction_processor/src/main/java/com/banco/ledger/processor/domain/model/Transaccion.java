@@ -9,14 +9,7 @@ import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Agregado rico de un movimiento del ledger: transferencia P2P o recarga de saldo.
- * Su ciclo de vida se gobierna con el patrón State: cada operación delega en el
- * estado actual, que decide la transición o lanza IllegalStateException.
- * La forma de mover el dinero la decide polimórficamente {@link TipoMovimiento}.
- */
 public class Transaccion {
-
     public static final String MOTIVO_FONDOS_INSUFICIENTES = "INSUFFICIENT_FUNDS";
 
     private final TransactionId id;
@@ -48,17 +41,12 @@ public class Transaccion {
         this(id, tipo, origen, destino, monto, recibidaEn, EstadoRecibida.INSTANCIA, null);
     }
 
-    /**
-     * Reconstruye una transacción ya registrada en el ledger con su último estado, para
-     * poder aplicarle nuevas transiciones (por ejemplo, marcarla como sospechosa).
-     */
     public static Transaccion reconstituir(TransactionId id, TipoMovimiento tipo, String origen, String destino,
                                            MontoDinero monto, EstadoTransaccion estado, String motivo,
                                            Instant actualizadaEn) {
         return new Transaccion(id, tipo, origen, destino, monto, actualizadaEn, estado, motivo);
     }
 
-    /** Transferencia P2P de {@code origen} a {@code destino}. */
     public static Transaccion recibirTransferencia(TransactionId id, String origen, String destino,
                                                    MontoDinero monto, Instant recibidaEn) {
         String origenValidado = requerirTexto(origen, "origen");
@@ -68,7 +56,6 @@ public class Transaccion {
         return new Transaccion(id, TipoMovimiento.TRANSFER, origenValidado, destino, monto, recibidaEn);
     }
 
-    /** Recarga de saldo en la cuenta de {@code titular}. */
     public static Transaccion recibirRecarga(TransactionId id, String titular, MontoDinero monto,
                                              Instant recibidaEn) {
         return new Transaccion(id, TipoMovimiento.DEPOSIT, null, titular, monto, recibidaEn);
@@ -79,10 +66,6 @@ public class Transaccion {
         actualizadaEn = ahora;
     }
 
-    /**
-     * Aplica el movimiento contable. La transición se valida antes de tocar los saldos
-     * para no dejar cuentas modificadas si el movimiento no está en un estado válido.
-     */
     public void ejecutar(Optional<CuentaBancaria> cuentaOrigen, CuentaBancaria cuentaDestino, Instant ahora) {
         exigirCuentasCorrectas(cuentaOrigen, cuentaDestino);
         EstadoTransaccion siguiente = estado.completar();
@@ -110,7 +93,6 @@ public class Transaccion {
         rechazar(MOTIVO_FONDOS_INSUFICIENTES, ahora);
     }
 
-    /** true solo si el estado actual permite pasar a SOSPECHOSA (es decir, está COMPLETADA). */
     public boolean admiteMarcaDeSospecha() {
         return estado.admiteSospecha();
     }
@@ -122,13 +104,11 @@ public class Transaccion {
         actualizadaEn = ahora;
     }
 
-    /** Proyecta el movimiento como evento del ledger, incluyendo los saldos resultantes. */
     public TransactionEventRecord aEvento(Optional<MontoDinero> saldoOrigen, MontoDinero saldoDestino) {
         return crearEvento(saldoOrigen.map(MontoDinero::valor).orElse(null),
                 Objects.requireNonNull(saldoDestino, "El saldo de destino es obligatorio").valor());
     }
 
-    /** Proyecta el movimiento como evento del ledger sin información de saldos. */
     public TransactionEventRecord aEvento() {
         return crearEvento(null, null);
     }

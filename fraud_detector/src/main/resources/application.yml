@@ -14,6 +14,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+  # Kafka: conexión al broker y serializadores de los mensajes
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -26,6 +27,7 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 ledger:
+  # Kafka: nombres de los topics
   kafka:
     transactions-topic: transactions_log
     fraud-alerts-topic: fraud_alerts

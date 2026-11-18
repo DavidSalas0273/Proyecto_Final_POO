@@ -8,13 +8,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MontoDineroTest {
-
     @Test
     void normalizaEscalaYDivisa() {
-        // Arrange & Act
         MontoDinero monto = new MontoDinero(new BigDecimal("50"), "usd");
 
-        // Assert
         assertThat(monto.valor()).isEqualTo(new BigDecimal("50.00"));
         assertThat(monto.divisa()).isEqualTo("USD");
     }
@@ -34,15 +31,12 @@ class MontoDineroTest {
 
     @Test
     void sumaYRestaDevuelvenNuevasInstancias() {
-        // Arrange
         MontoDinero cien = MontoDinero.de("100", "USD");
         MontoDinero treinta = MontoDinero.de("30", "USD");
 
-        // Act
         MontoDinero suma = cien.sumar(treinta);
         MontoDinero resta = cien.restar(treinta);
 
-        // Assert
         assertThat(suma).isEqualTo(MontoDinero.de("130", "USD"));
         assertThat(resta).isEqualTo(MontoDinero.de("70", "USD"));
         assertThat(cien).isEqualTo(MontoDinero.de("100", "USD"));

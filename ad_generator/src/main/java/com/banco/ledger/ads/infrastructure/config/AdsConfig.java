@@ -10,7 +10,6 @@ import java.util.List;
 
 @Configuration
 public class AdsConfig {
-
     @Bean
     public CatalogoPromociones catalogoPromociones() {
         return new CatalogoPromociones(List.of(
@@ -20,6 +19,7 @@ public class AdsConfig {
                 "Solicite su crédito de libre inversión 100% en línea"));
     }
 
+    // RabbitMQ: declara la cola durable email_queue
     @Bean
     public Queue emailQueue(@Value("${ledger.rabbit.email-queue}") String queue) {
         return new Queue(queue, true);

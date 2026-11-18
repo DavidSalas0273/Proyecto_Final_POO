@@ -10,11 +10,9 @@ import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 
-/** Modelo de persistencia de la cuenta, con bloqueo optimista (@Version). */
 @Entity
 @Table(name = "cuentas_bancarias")
 public class CuentaJpaEntity {
-
     @Id
     @Column(name = "titular", length = 100)
     private String titular;
@@ -30,7 +28,6 @@ public class CuentaJpaEntity {
     private Long version;
 
     protected CuentaJpaEntity() {
-        // requerido por JPA
     }
 
     private CuentaJpaEntity(CuentaBancaria cuenta) {

@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class EnrutadorNotificacionesTest {
-
     @Spy
     private PlantillaNotificaciones plantilla = new PlantillaNotificaciones("email.com");
     @Mock
@@ -36,10 +35,8 @@ class EnrutadorNotificacionesTest {
 
     @Test
     void eventoCompletadoPublicaDosComandosDeEmail() {
-        // Act
         enrutador.enrutar(evento("COMPLETED", null));
 
-        // Assert
         verify(publicador, times(1)).publicar(new EmailCommandRecord("user_a@email.com", "Envió $50 a B"));
         verify(publicador, times(1)).publicar(new EmailCommandRecord("user_b@email.com", "Recibió $50 de A"));
         verify(publicador, times(2)).publicar(any());

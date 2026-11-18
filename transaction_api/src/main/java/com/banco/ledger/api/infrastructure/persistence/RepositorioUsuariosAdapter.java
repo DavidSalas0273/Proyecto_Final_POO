@@ -7,10 +7,8 @@ import org.springframework.stereotype.Repository;
 import java.util.Locale;
 import java.util.Optional;
 
-/** Adaptador de persistencia de usuarios (dominio <-> JPA). */
 @Repository
 public class RepositorioUsuariosAdapter implements RepositorioUsuarios {
-
     private final SpringDataUsuarioRepository jpa;
 
     public RepositorioUsuariosAdapter(SpringDataUsuarioRepository jpa) {

@@ -2,9 +2,7 @@ package com.banco.ledger.api.infrastructure.web;
 
 import java.util.Optional;
 
-/** Extrae el token de la cabecera "Authorization: Bearer &lt;token&gt;". */
 final class TokenBearer {
-
     private static final String PREFIJO = "Bearer ";
 
     private TokenBearer() {

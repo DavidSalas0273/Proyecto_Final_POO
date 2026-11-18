@@ -14,10 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/** Adaptador Kafka: publica el evento en transactions_log usando tx_id como key. */
 @Component
 public class KafkaLedgerEventPublisher implements PublicadorEventosLedger {
-
     private static final Logger log = LoggerFactory.getLogger(KafkaLedgerEventPublisher.class);
 
     private final KafkaTemplate<String, String> kafkaTemplate;
@@ -35,6 +33,7 @@ public class KafkaLedgerEventPublisher implements PublicadorEventosLedger {
     public void publicar(TransactionEventRecord evento) {
         try {
             String json = objectMapper.writeValueAsString(evento);
+            // Kafka: publica el evento en el topic transactions_log (key = tx_id) y espera la confirmación del broker
             kafkaTemplate.send(topic, evento.txId(), json).get(10, TimeUnit.SECONDS);
             log.info("Evento {} [{}] publicado en {}", evento.txId(), evento.status(), topic);
         } catch (JsonProcessingException e) {

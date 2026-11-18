@@ -1,14 +1,5 @@
 name: ledger-infra
 
-# ---------------------------------------------------------------------------
-# Solo infraestructura, con puertos publicados en localhost.
-# Pensado para desarrollo: los microservicios se ejecutan desde IntelliJ (Run/Debug)
-# con sus valores por defecto de application.yml (localhost, usuario ledger/ledger).
-#
-#   docker compose -f docker-compose.infra.yml up -d
-#
-# No lo levantes a la vez que docker-compose.yml (comparten puertos).
-# ---------------------------------------------------------------------------
 services:
   postgres:
     image: postgres:16-alpine
@@ -17,7 +8,7 @@ services:
       POSTGRES_USER: ledger
       POSTGRES_PASSWORD: ledger
     ports:
-      - "5433:5432"   # 5433 para no chocar con un PostgreSQL local instalado en Windows
+      - "5433:5432"
     volumes:
       - pgdata-dev:/var/lib/postgresql/data
     healthcheck:
@@ -31,6 +22,7 @@ services:
           cpus: "1.0"
           memory: 512M
 
+  # Kafka: Zookeeper coordina el broker de Kafka
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.3
     environment:
@@ -43,6 +35,7 @@ services:
           cpus: "0.50"
           memory: 512M
 
+  # Kafka: broker anunciado como localhost:9092 para los servicios que corren en IntelliJ
   kafka:
     image: confluentinc/cp-kafka:7.5.3
     depends_on:
@@ -52,7 +45,6 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # Se anuncia como localhost:9092 para que los servicios del IDE puedan conectarse
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -72,6 +64,7 @@ services:
           cpus: "1.0"
           memory: 1G
 
+  # RabbitMQ: broker de comandos en localhost:5672; consola en el puerto 15672
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     environment:

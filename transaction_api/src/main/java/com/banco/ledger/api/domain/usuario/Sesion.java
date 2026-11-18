@@ -2,9 +2,7 @@ package com.banco.ledger.api.domain.usuario;
 
 import java.time.Instant;
 
-/** Sesión de la banca en línea: token opaco, titular y vencimiento. */
 public record Sesion(String token, String usuario, String nombreCompleto, Instant expiraEn) {
-
     public Sesion {
         if (token == null || token.length() < 32) {
             throw new IllegalArgumentException("El token de sesión no es válido");

@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfig {
-
+    // RabbitMQ: declara la cola durable transfer_commands
     @Bean
     public Queue transferCommandsQueue(@Value("${ledger.rabbit.transfer-queue}") String queue) {
         return new Queue(queue, true);

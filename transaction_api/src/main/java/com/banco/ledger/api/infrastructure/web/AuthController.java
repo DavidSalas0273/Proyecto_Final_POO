@@ -16,11 +16,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Banca en línea: abrir cuenta, ingresar, consultar la sesión y salir. */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-
     private final ServicioAutenticacion autenticacion;
 
     public AuthController(ServicioAutenticacion autenticacion) {

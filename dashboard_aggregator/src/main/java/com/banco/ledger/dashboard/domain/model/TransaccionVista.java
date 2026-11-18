@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Fila inmutable de la vista materializada; los cambios producen nuevas instancias. */
 public record TransaccionVista(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("type") String type,
@@ -21,13 +20,8 @@ public record TransaccionVista(
         @JsonProperty("suspicious") boolean suspicious,
         @JsonProperty("fraud_reason") String fraudReason,
         @JsonProperty("timestamp") Instant timestamp) {
-
     public static final String ESTADO_SOSPECHOSA = "SUSPICIOUS";
 
-    /**
-     * Crea la fila a partir del evento del ledger. Si el ledger ya trae el estado
-     * SUSPICIOUS (publicado por el procesador tras la alerta), la fila nace marcada.
-     */
     public static TransaccionVista desde(TransactionEventRecord evento) {
         boolean sospechosa = ESTADO_SOSPECHOSA.equals(evento.status());
         return new TransaccionVista(evento.txId(), evento.type(), evento.fromUser(), evento.toUser(),

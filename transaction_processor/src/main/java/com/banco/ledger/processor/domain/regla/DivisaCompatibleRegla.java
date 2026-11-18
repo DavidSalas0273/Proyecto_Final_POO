@@ -5,9 +5,7 @@ import com.banco.ledger.processor.domain.model.Transaccion;
 
 import java.util.Optional;
 
-/** Rechaza movimientos cuya divisa no coincide con la de las cuentas involucradas. */
 public class DivisaCompatibleRegla implements ReglaValidacionTransaccion {
-
     public static final String MOTIVO = "CURRENCY_MISMATCH";
 
     @Override

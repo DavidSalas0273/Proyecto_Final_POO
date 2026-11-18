@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EstadoTransaccionTest {
-
     @Test
     void transicionesPermitidas() {
         assertThat(EstadoRecibida.INSTANCIA.iniciarProcesamiento()).isSameAs(EstadoProcesando.INSTANCIA);

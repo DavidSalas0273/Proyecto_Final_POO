@@ -7,10 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-/** Adaptador de entrada: consume fraud_alerts para cerrar el ciclo de vida en SOSPECHOSA. */
 @Component
 public class FraudAlertListener {
-
     private final MarcadorDeSospechas marcador;
     private final ObjectMapper objectMapper;
 
@@ -19,6 +17,7 @@ public class FraudAlertListener {
         this.objectMapper = objectMapper;
     }
 
+    // Kafka: consume el topic fraud_alerts (grupo transaction-processor) para marcar la transacción como SOSPECHOSA
     @KafkaListener(topics = "${ledger.kafka.fraud-alerts-topic}")
     public void alRecibirAlerta(String payload) throws JsonProcessingException {
         marcador.marcar(objectMapper.readValue(payload, FraudAlertRecord.class));

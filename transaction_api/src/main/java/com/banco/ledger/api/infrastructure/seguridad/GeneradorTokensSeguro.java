@@ -6,10 +6,8 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/** Tokens de 256 bits aleatorios (SecureRandom), codificados en Base64 URL-safe. */
 @Component
 public class GeneradorTokensSeguro implements GeneradorTokens {
-
     private final SecureRandom aleatorio = new SecureRandom();
 
     @Override

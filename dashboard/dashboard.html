@@ -8,13 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;650;700&display=swap">
-    <!-- Aplica el tema elegido (claro/oscuro) antes de pintar, para que no parpadee -->
+
     <script>try { const t = localStorage.getItem("ledger.tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
     <link rel="stylesheet" href="app.css">
 </head>
 <body>
 <div id="app" class="app">
-    <!-- ======================= Menú lateral ======================= -->
+
     <aside id="lateral" class="lateral" aria-label="Menú principal">
         <div class="accesos" aria-label="Accesos rápidos">
             <button type="button" class="acceso-rapido principal" data-ir="mover" data-pestana="enviar" title="Enviar dinero" aria-label="Enviar dinero"><svg class="icono-svg" data-icono="enviado"></svg></button>
@@ -46,7 +46,6 @@
     </aside>
     <div id="velo" class="velo" hidden></div>
 
-    <!-- ======================= Contenido ======================= -->
     <div class="contenido">
         <header class="barra">
             <button type="button" id="boton-menu" class="boton-icono" aria-label="Mostrar u ocultar el menú" aria-controls="lateral" aria-expanded="true"><svg class="icono-svg" data-icono="menu"></svg></button>
@@ -58,7 +57,7 @@
         </header>
 
         <main class="vistas" id="principal" tabindex="-1">
-            <!-- ======================= Inicio ======================= -->
+
             <section class="vista" data-vista="inicio" aria-labelledby="t-inicio">
                 <h2 class="vista-titulo" id="t-inicio">Hola, <span id="saludo-nombre">cliente</span></h2>
                 <p class="vista-sub">Este es el estado de tu cuenta y un resumen de tu actividad.</p>
@@ -120,7 +119,6 @@
                 </div>
             </section>
 
-            <!-- ======================= Mover dinero ======================= -->
             <section class="vista" data-vista="mover" aria-labelledby="t-mover" hidden>
                 <h2 class="vista-titulo" id="t-mover">Mover dinero</h2>
                 <p class="vista-sub">Envía dinero a otro usuario o recarga tu cuenta. El resultado aparece en tu registro en segundos.</p>
@@ -166,7 +164,6 @@
                 </div>
             </section>
 
-            <!-- ======================= Movimientos ======================= -->
             <section class="vista" data-vista="movimientos" aria-labelledby="t-movs" hidden>
                 <h2 class="vista-titulo" id="t-movs">Movimientos</h2>
                 <p class="vista-sub">El registro de las transacciones que generas y recibes. Las denegadas y las sospechosas llevan un signo de alerta.</p>
@@ -191,7 +188,6 @@
                 </section>
             </section>
 
-            <!-- ======================= Alertas ======================= -->
             <section class="vista" data-vista="alertas" aria-labelledby="t-alertas" hidden>
                 <h2 class="vista-titulo" id="t-alertas">Alertas</h2>
                 <p class="vista-sub">Transacciones que el sistema denegó o que el detector de fraude marcó como sospechosas, con la razón de cada una.</p>
@@ -209,7 +205,6 @@
                 </section>
             </section>
 
-            <!-- ======================= Simulador ======================= -->
             <section class="vista" data-vista="simulador" aria-labelledby="t-sim" hidden>
                 <h2 class="vista-titulo" id="t-sim">Simulador</h2>
                 <p class="vista-sub">Envía transacciones de prueba al sistema real y mira cuándo las deniega o las advierte. Usan cuentas de prueba (sim_…), así que tu saldo no cambia.</p>
@@ -238,7 +233,6 @@
                 </div>
             </section>
 
-            <!-- ======================= Análisis ======================= -->
             <section class="vista" data-vista="analisis" aria-labelledby="t-analisis" hidden>
                 <h2 class="vista-titulo" id="t-analisis">Análisis</h2>
                 <p class="vista-sub">Indicadores de todo el banco, calculados en vivo a partir del ledger.</p>

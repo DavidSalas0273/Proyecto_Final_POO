@@ -14,6 +14,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: update
+  # RabbitMQ: conexión al broker (host, puerto y credenciales)
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -24,6 +25,7 @@ spring:
         prefetch: 1
         concurrency: 1
         default-requeue-rejected: false
+  # Kafka: conexión al broker y serializadores de los mensajes
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -31,20 +33,20 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
     consumer:
-      # Consume fraud_alerts para llevar la transacción al estado SOSPECHOSA
       group-id: transaction-processor
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 ledger:
+  # RabbitMQ: nombres de las colas
   rabbit:
     transfer-queue: transfer_commands
+  # Kafka: nombres de los topics
   kafka:
     transactions-topic: transactions_log
     fraud-alerts-topic: fraud_alerts
   cuentas:
-    # Las cuentas nuevas empiezan sin saldo: el usuario debe recargar antes de enviar
     saldo-inicial: ${LEDGER_SALDO_INICIAL:0}
     divisa-base: USD
   reglas:

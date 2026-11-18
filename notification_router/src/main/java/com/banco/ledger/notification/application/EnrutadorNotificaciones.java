@@ -5,13 +5,8 @@ import com.banco.ledger.notification.domain.PlantillaNotificaciones;
 import com.banco.ledger.notification.domain.contract.TransactionEventRecord;
 import org.springframework.stereotype.Service;
 
-/**
- * Caso de uso: por cada evento del ledger, encolar las notificaciones que le
- * correspondan (envíos, recargas y operaciones denegadas).
- */
 @Service
 public class EnrutadorNotificaciones {
-
     private final PlantillaNotificaciones plantilla;
     private final PublicadorComandosEmail publicador;
 

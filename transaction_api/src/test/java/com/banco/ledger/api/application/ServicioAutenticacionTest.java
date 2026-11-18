@@ -37,7 +37,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ServicioAutenticacionTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-17T09:00:00Z");
     private static final String TOKEN = "t".repeat(43);
 
@@ -67,13 +66,10 @@ class ServicioAutenticacionTest {
 
     @Test
     void registroGuardaElHashYAbreUnaSesion() {
-        // Arrange
         when(cifrador.cifrar("clave2026")).thenReturn("$2a$10$hash");
 
-        // Act
         Sesion sesion = servicio.registrar(datos);
 
-        // Assert
         ArgumentCaptor<Usuario> guardado = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarios, times(1)).guardar(guardado.capture());
         assertThat(guardado.getValue().hashContrasena()).isEqualTo("$2a$10$hash");

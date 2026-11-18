@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProyeccionDashboardTest {
-
     @Mock
     private VistaMaterializada vista;
     @Mock
@@ -37,14 +36,11 @@ class ProyeccionDashboardTest {
 
     @Test
     void cadaTransaccionSeDifundeUnaVez() {
-        // Arrange
         TransaccionVista fila = TransaccionVista.desde(evento);
         when(vista.aplicarTransaccion(evento)).thenReturn(fila);
 
-        // Act
         proyeccion.alRecibirTransaccion(evento);
 
-        // Assert
         verify(difusor, times(1)).difundir(fila);
     }
 

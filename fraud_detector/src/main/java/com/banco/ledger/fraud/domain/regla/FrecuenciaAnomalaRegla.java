@@ -7,12 +7,7 @@ import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
 
-/**
- * Regla stateful: alerta si un usuario realiza más de N transferencias dentro de la
- * ventana de tiempo (consulta el historial acumulado por el consumidor).
- */
 public class FrecuenciaAnomalaRegla implements ReglaDeteccionFraude {
-
     public static final String MOTIVO = "ANOMALOUS_FREQUENCY";
 
     private final int maxTransacciones;

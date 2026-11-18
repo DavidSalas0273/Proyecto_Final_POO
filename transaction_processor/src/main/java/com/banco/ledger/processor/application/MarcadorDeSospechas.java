@@ -14,14 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.util.Optional;
 
-/**
- * Caso de uso: cuando fraud_detector publica una alerta, la transacción pasa de
- * COMPLETADA a SOSPECHOSA (patrón State), el cambio queda en el historial de
- * estados (PostgreSQL) y se publica en el ledger como un nuevo evento.
- */
 @Service
 public class MarcadorDeSospechas {
-
     private static final Logger log = LoggerFactory.getLogger(MarcadorDeSospechas.class);
 
     private final TransaccionRepository transacciones;
@@ -35,12 +29,8 @@ public class MarcadorDeSospechas {
         this.clock = clock;
     }
 
-    /**
-     * @throws IllegalStateException si la transacción todavía no está registrada; el
-     *                               consumidor de Kafka reintenta el mensaje.
-     */
     @Transactional
-    public Optional<TransactionEventRecord> marcar(FraudAlertRecord alerta) {
+    public O5ptional<TransactionEventRecord> marcar(FraudAlertRecord alerta) {
         Transaccion transaccion = transacciones.buscar(new TransactionId(alerta.txId()))
                 .orElseThrow(() -> new IllegalStateException(
                         "La transacción " + alerta.txId() + " aún no está registrada en el ledger"));

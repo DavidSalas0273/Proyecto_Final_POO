@@ -38,11 +38,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ProcesadorTransaccionesTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:01Z");
     private static final Instant SOLICITADA = Instant.parse("2026-11-11T11:30:00Z");
 
-    // Puertos de persistencia y mensajería: dobles de prueba
     @Mock
     private TransaccionRepository transacciones;
     @Mock
@@ -52,7 +50,6 @@ class ProcesadorTransaccionesTest {
     @Mock
     private Clock clock;
 
-    // Lógica de dominio real (Spy): se prueban las reglas verdaderas, no un simulacro
     @Spy
     private CadenaValidacion validaciones = new CadenaValidacion(
             List.of(new DivisaCompatibleRegla(), new FondosSuficientesRegla()));
@@ -64,7 +61,6 @@ class ProcesadorTransaccionesTest {
 
     @BeforeEach
     void setUp() {
-        // lenient: la prueba de comando duplicado termina antes de consultar el reloj
         lenient().when(clock.instant()).thenReturn(AHORA);
     }
 
@@ -80,16 +76,13 @@ class ProcesadorTransaccionesTest {
 
     @Test
     void transferenciaConSaldoPersisteUnaVezYPublicaEventoCompletedConSaldos() {
-        // Arrange
         when(transacciones.existe(any())).thenReturn(false);
         when(cuentas.buscarPorTitular("A")).thenReturn(Optional.of(
                 CuentaBancaria.reconstituir("A", MontoDinero.de("1000", "USD"))));
         when(cuentas.buscarPorTitular("B")).thenReturn(Optional.empty());
 
-        // Act
         Optional<TransactionEventRecord> resultado = procesador.procesar(transferencia("50"));
 
-        // Assert
         verify(transacciones, times(1)).guardar(any(TransactionEventRecord.class));
         TransactionEventRecord evento = eventoPublicado();
         assertThat(evento.status()).isEqualTo("COMPLETED");
@@ -107,14 +100,11 @@ class ProcesadorTransaccionesTest {
 
     @Test
     void transferenciaSinSaldoSeDeniegaYNoMueveDinero() {
-        // Arrange: cuentas nuevas empiezan en 0
         when(transacciones.existe(any())).thenReturn(false);
         when(cuentas.buscarPorTitular(any())).thenReturn(Optional.empty());
 
-        // Act
         procesador.procesar(transferencia("500"));
 
-        // Assert
         verify(transacciones, times(1)).guardar(any(TransactionEventRecord.class));
         TransactionEventRecord evento = eventoPublicado();
         assertThat(evento.status()).isEqualTo("REJECTED");
@@ -125,15 +115,12 @@ class ProcesadorTransaccionesTest {
 
     @Test
     void recargaSumaAlSaldoDelTitular() {
-        // Arrange
         when(transacciones.existe(any())).thenReturn(false);
         when(cuentas.buscarPorTitular("A")).thenReturn(Optional.of(
                 CuentaBancaria.reconstituir("A", MontoDinero.de("20", "USD"))));
 
-        // Act
         procesador.procesar(new DepositCommandRecord("tx-r", "A", new BigDecimal("80"), "USD", SOLICITADA));
 
-        // Assert
         TransactionEventRecord evento = eventoPublicado();
         assertThat(evento.type()).isEqualTo("DEPOSIT");
         assertThat(evento.status()).isEqualTo("COMPLETED");
@@ -145,13 +132,10 @@ class ProcesadorTransaccionesTest {
 
     @Test
     void comandoDuplicadoNoSeReprocesa() {
-        // Arrange
         when(transacciones.existe(any())).thenReturn(true);
 
-        // Act
         Optional<TransactionEventRecord> resultado = procesador.procesar(transferencia("50"));
 
-        // Assert
         assertThat(resultado).isEmpty();
         verify(transacciones, never()).guardar(any());
         verify(publicador, never()).publicar(any());

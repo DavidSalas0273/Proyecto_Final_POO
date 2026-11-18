@@ -3,13 +3,8 @@ package com.banco.ledger.api.domain.usuario;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/**
- * Datos de apertura de una cuenta en la banca en línea.
- * Value Object inmutable con validación Fail-Fast: si existe, es válido.
- */
 public record DatosRegistro(String nombreCompleto, String documento, String email, String usuario,
                             String contrasena) {
-
     private static final Pattern DOCUMENTO = Pattern.compile("\\d{6,12}");
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]{2,}$");
     private static final Pattern USUARIO = Pattern.compile("[A-Za-z0-9_]{3,20}");
@@ -47,7 +42,6 @@ public record DatosRegistro(String nombreCompleto, String documento, String emai
         }
     }
 
-    /** Evita que la contraseña en texto plano aparezca en logs o mensajes de error. */
     @Override
     public String toString() {
         return "DatosRegistro[usuario=" + usuario + ", email=" + email + "]";

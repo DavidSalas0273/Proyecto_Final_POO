@@ -15,10 +15,8 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.List;
 
-/** Composición: aquí se eligen y configuran las estrategias de detección. */
 @Configuration
 public class FraudConfig {
-
     @Bean
     public Clock clock() {
         return Clock.systemUTC();
@@ -40,11 +38,13 @@ public class FraudConfig {
                 new FrecuenciaAnomalaRegla(maxTransacciones, Duration.ofSeconds(ventanaSegundos))));
     }
 
+    // Kafka: crea el topic fraud_alerts (3 particiones) si no existe
     @Bean
     public NewTopic fraudAlertsTopic(@Value("${ledger.kafka.fraud-alerts-topic}") String topic) {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();
     }
 
+    // Kafka: crea el topic transactions_log (3 particiones) si no existe
     @Bean
     public NewTopic transactionsLogTopic(@Value("${ledger.kafka.transactions-topic}") String topic) {
         return TopicBuilder.name(topic).partitions(3).replicas(1).build();

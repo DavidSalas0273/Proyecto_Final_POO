@@ -8,7 +8,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DatosRegistroTest {
-
     private static DatosRegistro datos(String nombre, String documento, String email, String usuario,
                                        String contrasena) {
         return new DatosRegistro(nombre, documento, email, usuario, contrasena);
@@ -16,10 +15,8 @@ class DatosRegistroTest {
 
     @Test
     void normalizaLosDatosValidos() {
-        // Arrange & Act
         DatosRegistro d = datos("  Ana   María Pérez ", "1.020.345-678", "Ana@Correo.COM ", "ana_p", "clave2026");
 
-        // Assert
         assertThat(d.nombreCompleto()).isEqualTo("Ana María Pérez");
         assertThat(d.documento()).isEqualTo("1020345678");
         assertThat(d.email()).isEqualTo("ana@correo.com");

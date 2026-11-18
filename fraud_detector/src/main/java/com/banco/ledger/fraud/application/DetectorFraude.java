@@ -14,13 +14,8 @@ import org.springframework.stereotype.Service;
 import java.time.Clock;
 import java.util.Optional;
 
-/**
- * Caso de uso: analizar cada transferencia COMPLETED del ledger, mantener el estado del
- * flujo y, si alguna estrategia lo marca, auditar en PostgreSQL y publicar la alerta.
- */
 @Service
 public class DetectorFraude {
-
     private static final Logger log = LoggerFactory.getLogger(DetectorFraude.class);
 
     private final PoliticaDeteccionFraude politica;

@@ -9,7 +9,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FraudAlertRecordTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:31:04Z");
 
     @Test

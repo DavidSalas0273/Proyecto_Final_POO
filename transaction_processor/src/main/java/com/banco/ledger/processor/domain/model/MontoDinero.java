@@ -5,12 +5,7 @@ import java.math.RoundingMode;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * Value Object inmutable que representa una cantidad de dinero en una divisa.
- * Nunca puede ser negativo: las operaciones devuelven nuevas instancias.
- */
 public record MontoDinero(BigDecimal valor, String divisa) {
-
     public static final Set<String> DIVISAS_ADMITIDAS = Set.of("USD", "EUR", "COP");
 
     public MontoDinero {

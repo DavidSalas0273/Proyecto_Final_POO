@@ -6,16 +6,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CuentaBancariaTest {
-
     @Test
     void debitarReduceElSaldo() {
-        // Arrange
         CuentaBancaria cuenta = CuentaBancaria.abrir("A", MontoDinero.de("100", "USD"));
 
-        // Act
         cuenta.debitar(MontoDinero.de("40", "USD"));
 
-        // Assert
         assertThat(cuenta.saldo()).isEqualTo(MontoDinero.de("60", "USD"));
     }
 
@@ -30,10 +26,8 @@ class CuentaBancariaTest {
 
     @Test
     void debitarSinFondosLanzaIllegalStateYNoModificaSaldo() {
-        // Arrange
         CuentaBancaria cuenta = CuentaBancaria.abrir("A", MontoDinero.de("10", "USD"));
 
-        // Act & Assert
         assertThatThrownBy(() -> cuenta.debitar(MontoDinero.de("10.01", "USD")))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Fondos insuficientes");

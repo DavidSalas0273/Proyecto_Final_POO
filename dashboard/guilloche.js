@@ -1,13 +1,3 @@
-/*
- * Ledger · roseta guilloché compartida (login, registro y dashboard).
- * Dibuja epitrocoides superpuestos, como la impresión de seguridad de un billete.
- *
- *   Guilloche.montar(canvas, {
- *     geometria: (ancho, alto) => ({ x, y, escala }),  // centro y tamaño de la roseta
- *     duracion: 1400,                                   // ms del trazado inicial (0 = sin animación)
- *     opacidad: 1                                       // multiplicador de la intensidad
- *   });
- */
 window.Guilloche = (function () {
   "use strict";
 
@@ -76,7 +66,6 @@ window.Guilloche = (function () {
     if (reducirMovimiento || duracion <= 0) {
       dibujar(1);
     } else {
-      // Un único momento orquestado: la roseta se "imprime" con un ease-out fuerte
       const inicio = performance.now();
       const easeOut = t => 1 - Math.pow(1 - t, 4);
       (function cuadro(ahora) {
@@ -86,7 +75,6 @@ window.Guilloche = (function () {
       })(inicio);
     }
 
-    // Al cambiar el tamaño se redibuja completa, sin repetir la animación
     let pendiente;
     const redibujar = () => {
       cancelAnimationFrame(pendiente);

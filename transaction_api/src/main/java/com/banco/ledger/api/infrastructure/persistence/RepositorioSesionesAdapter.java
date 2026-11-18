@@ -6,10 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-/** Adaptador de persistencia de sesiones. */
 @Repository
 public class RepositorioSesionesAdapter implements RepositorioSesiones {
-
     private final SpringDataSesionRepository jpa;
 
     public RepositorioSesionesAdapter(SpringDataSesionRepository jpa) {

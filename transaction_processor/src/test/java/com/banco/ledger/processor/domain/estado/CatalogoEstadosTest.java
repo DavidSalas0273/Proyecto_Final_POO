@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CatalogoEstadosTest {
-
     @Test
     void traduceCadaCodigoASuEstado() {
         assertThat(CatalogoEstados.desdeCodigo("RECEIVED")).isSameAs(EstadoRecibida.INSTANCIA);

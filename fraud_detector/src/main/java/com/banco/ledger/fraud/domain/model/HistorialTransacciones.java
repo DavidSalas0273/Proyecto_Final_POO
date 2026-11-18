@@ -8,12 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Estado en memoria del consumidor stateful: ventana deslizante de transacciones
- * por usuario. Purga automáticamente lo que queda fuera del periodo de retención.
- */
 public class HistorialTransacciones {
-
     private final Duration retencion;
     private final Map<String, Deque<Instant>> porUsuario = new HashMap<>();
 

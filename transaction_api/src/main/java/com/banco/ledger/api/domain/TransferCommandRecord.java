@@ -7,11 +7,6 @@ import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * Comando inmutable "Usuario A quiere enviar X a Usuario B".
- * Es el contrato que viaja por la Work Queue de RabbitMQ (transfer_commands).
- * El constructor compacto aplica validaciones Fail-Fast.
- */
 public record TransferCommandRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("from_user") String fromUser,
@@ -19,7 +14,6 @@ public record TransferCommandRecord(
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("currency") String currency,
         @JsonProperty("requested_at") Instant requestedAt) implements ComandoLedger {
-
     public static final Set<String> DIVISAS_ADMITIDAS = Set.of("USD", "EUR", "COP");
 
     public TransferCommandRecord {

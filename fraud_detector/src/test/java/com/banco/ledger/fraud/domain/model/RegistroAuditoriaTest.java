@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RegistroAuditoriaTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:31:04Z");
 
     private static TransactionEventRecord evento(String tipo, String estado) {
@@ -21,11 +20,9 @@ class RegistroAuditoriaTest {
 
     @Test
     void abreElRegistroYProduceLaAlertaPublica() {
-        // Arrange & Act
         RegistroAuditoria registro = RegistroAuditoria.abrirPorSospecha(
                 evento("TRANSFER", "COMPLETED"), " HIGH_VALUE_TRANSACTION ", AHORA);
 
-        // Assert
         FraudAlertRecord alerta = registro.aAlerta();
         assertThat(alerta.txId()).isEqualTo("tx-9");
         assertThat(alerta.reason()).isEqualTo("HIGH_VALUE_TRANSACTION");

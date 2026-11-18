@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class GeneradorAnunciosTest {
-
     @Mock
     private CatalogoPromociones catalogo;
     @Mock
@@ -23,14 +22,11 @@ class GeneradorAnunciosTest {
 
     @Test
     void publicaUnAnuncioParaTodaLaAudiencia() {
-        // Arrange
         when(catalogo.siguientePromocion()).thenReturn("¡Obtenga nuestra nueva Tarjeta de Crédito!");
         GeneradorAnuncios generador = new GeneradorAnuncios(catalogo, publicador, "all_users@banco.com");
 
-        // Act
         EmailCommandRecord anuncio = generador.generarAnuncio();
 
-        // Assert
         verify(publicador, times(1)).publicar(anuncio);
         assertThat(anuncio.to()).isEqualTo("all_users@banco.com");
         assertThat(anuncio.body()).contains("Tarjeta de Crédito");

@@ -7,10 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/** Adaptador de entrada temporal: dispara la campaña de marketing periódicamente. */
 @Component
 public class TareaPublicidadProgramada {
-
     private static final Logger log = LoggerFactory.getLogger(TareaPublicidadProgramada.class);
 
     private final GeneradorAnuncios generador;

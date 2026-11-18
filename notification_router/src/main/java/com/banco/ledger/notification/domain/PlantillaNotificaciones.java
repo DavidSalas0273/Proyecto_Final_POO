@@ -10,17 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-/**
- * Traduce un evento del ledger en los emails correspondientes. Cada combinación
- * "TIPO:ESTADO" tiene su propia plantilla (tabla de estrategias, sin switch):
- * <ul>
- *   <li>TRANSFER:COMPLETED -> emisor ("Envió $50 a B") y receptor ("Recibió $50 de A").</li>
- *   <li>DEPOSIT:COMPLETED  -> titular ("Recargó $100 en su cuenta. Saldo disponible: $100").</li>
- *   <li>TRANSFER:REJECTED / DEPOSIT:REJECTED -> aviso de operación denegada.</li>
- * </ul>
- */
 public class PlantillaNotificaciones {
-
     private static final Map<String, String> SIMBOLOS = Map.of("USD", "$", "EUR", "€", "COP", "COL$");
     private static final Map<String, String> MOTIVOS = Map.of(
             "INSUFFICIENT_FUNDS", "fondos insuficientes",
@@ -46,7 +36,6 @@ public class PlantillaNotificaciones {
         return plantillas.getOrDefault(evento.clave(), e -> List.of()).apply(evento);
     }
 
-    /** Formato exacto del enunciado: { "to": "user_a@email.com", "body": "Envió $50 a B" }. */
     private List<EmailCommandRecord> transferenciaCompletada(TransactionEventRecord e) {
         String monto = formatear(e.amount(), e.currency());
         return List.of(

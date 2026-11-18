@@ -1,9 +1,3 @@
-/*
- * Ledger · banca en línea (lógica del dashboard)
- * Vistas por hash (#inicio, #mover, #movimientos, #alertas, #simulador, #analisis),
- * datos en vivo por WebSocket, alertas en pantalla, simulador contra el backend real
- * y tema claro/oscuro guardado en localStorage.
- */
 (function () {
   "use strict";
 
@@ -13,7 +7,6 @@
   const CLAVE_SESION = "ledger.sesion";
   const CLAVE_TEMA = "ledger.tema";
 
-  // Reglas del backend (deben coincidir con docker-compose.yml) para predecir resultados
   const REGLAS = { umbralAltoValor: 10000, maxEnviosVentana: 5, ventanaSegundos: 60, limitePorOperacion: 1000000 };
 
   const MOTIVOS = {
@@ -31,7 +24,6 @@
     ANOMALOUS_FREQUENCY: "La misma cuenta hizo más de 5 envíos en menos de 60 segundos."
   };
 
-  // ---------------- Sesión: sin sesión vigente no se puede ver la banca ----------------
   const SESION = (() => {
     try {
       const s = JSON.parse(sessionStorage.getItem(CLAVE_SESION) || "null");
@@ -47,7 +39,7 @@
     try {
       sessionStorage.removeItem(CLAVE_SESION);
       sessionStorage.setItem("ledger.aviso", JSON.stringify({ texto, tipo }));
-    } catch (e) { /* sin almacenamiento */ }
+    } catch (e) {  }
     location.replace("login.html");
   }
   const sesionVencida = () => terminarSesion("Tu sesión venció. Vuelve a ingresar.", "aviso");
@@ -68,7 +60,6 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // ---------------- Utilidades ----------------
   function dinero(valor, divisa) {
     try {
       return new Intl.NumberFormat("es-CO", { style: "currency", currency: divisa || "USD", minimumFractionDigits: 2 })
@@ -99,7 +90,6 @@
     return nodo;
   }
 
-  // ---------------- Iconos (trazos propios, sin librerías) ----------------
   const ICONOS = {
     inicio: ["M3 11 12 4l9 7", "M5 10v10h5v-6h4v6h5V10"],
     mover: ["M7 7h13", "M16 3l4 4-4 4", "M17 17H4", "M8 13l-4 4 4 4"],
@@ -136,7 +126,6 @@
     return nodo;
   }
 
-  // ---------------- Tema claro / oscuro (persistente) ----------------
   function temaActual() {
     return document.documentElement.dataset.theme
       || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
@@ -153,12 +142,11 @@
   function cambiarTema() {
     const nuevo = temaActual() === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = nuevo;
-    try { localStorage.setItem(CLAVE_TEMA, nuevo); } catch (e) { /* sin almacenamiento */ }
+    try { localStorage.setItem(CLAVE_TEMA, nuevo); } catch (e) {  }
     pintarControlesTema();
-    renderizar(); // los gráficos leen los colores del tema
+    renderizar();
   }
 
-  // ---------------- Avisos breves y alertas en pantalla ----------------
   function toast(texto, tipo) {
     const t = el("div", "toast " + (tipo || ""), texto);
     $("toasts").append(t);
@@ -172,7 +160,6 @@
     return esRecarga(m) ? "Recarga a " + m.to_user : m.from_user + " → " + m.to_user;
   }
 
-  /** Alerta destacada en pantalla cuando una transacción se deniega o se marca como sospechosa. */
   function alertaEnPantalla(m) {
     const sospechosa = Boolean(m.suspicious);
     const clave = m.tx_id + (sospechosa ? ":sos" : ":den");
@@ -220,7 +207,6 @@
     c.textContent = estado.alertasNoVistas > 99 ? "99+" : String(estado.alertasNoVistas);
   }
 
-  // ---------------- Navegación por vistas ----------------
   const VISTAS = ["inicio", "mover", "movimientos", "alertas", "simulador", "analisis"];
   let pestanaPendiente = null;
 
@@ -254,7 +240,7 @@
       if (!abrir) return cerrarMenuMovil();
       app.classList.add("menu-abierto");
       $("velo").hidden = false;
-      void $("velo").offsetHeight; // aplica el estado inicial antes de la transición
+      void $("velo").offsetHeight;
       $("velo").classList.add("visible");
       $("boton-menu").setAttribute("aria-expanded", "true");
     } else {
@@ -264,7 +250,6 @@
     }
   }
 
-  // ---------------- Saldo y operaciones ----------------
   const cuentaPropia = () => [...estado.cuentas.values()].find(c => mismoUsuario(c.user, estado.usuario));
   const saldoPropio = () => { const c = cuentaPropia(); return c ? Number(c.balance) : 0; };
 
@@ -302,7 +287,6 @@
     setTimeout(() => f.amount.focus(), 0);
   }
 
-  // ---------------- Barras de saldo por cuenta ----------------
   function pintarBarras(idLista, opciones) {
     const lista = [...estado.cuentas.values()].filter(c => !esSim(c.user))
       .sort((a, b) => Number(b.balance) - Number(a.balance));
@@ -345,7 +329,6 @@
       .map(c => { const o = el("option"); o.value = c.user; return o; }));
   }
 
-  // ---------------- Clasificación de un movimiento respecto al titular ----------------
   function direccion(m) {
     if (esRecarga(m)) return "recarga";
     if (mismoUsuario(m.from_user, estado.usuario)) return "enviado";
@@ -376,7 +359,6 @@
     const li = el("li", clases.join(" "));
     li.dataset.txId = m.tx_id;
 
-    // Icono: envío, recibido o recarga; signo de alerta si fue denegada o sospechosa
     const caja = el("div", "icono");
     const conAlerta = m.suspicious || esDenegado(m);
     caja.append(icono(conAlerta ? "alertas" : d === "tercero" ? "mover" : d));
@@ -412,7 +394,6 @@
 
   const ordenados = () => [...estado.movimientos.values()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  // ---------------- Inicio ----------------
   function pintarInicio(lista, resaltar) {
     const propios = lista.filter(esPropio);
     const completados = propios.filter(m => !esDenegado(m));
@@ -440,7 +421,6 @@
     $("c-aprobacion").style.transform = "scaleX(" + (total ? completados.length / total : 0) + ")";
     $("p-aprobacion").textContent = pct(completados.length, total) + " %";
 
-    // ¿Ha hecho transacciones?
     const texto = $("actividad-texto");
     texto.replaceChildren();
     if (!total) {
@@ -463,7 +443,6 @@
     $("saludo-nombre").textContent = (SESION.full_name || SESION.username).split(" ")[0];
   }
 
-  // ---------------- Registro de movimientos ----------------
   function pasaFiltros(m) {
     const d = direccion(m);
     const filtros = {
@@ -494,7 +473,6 @@
     renderizar();
   }
 
-  // ---------------- Centro de alertas ----------------
   function pintarAlertas(lista) {
     const alertas = lista.filter(m => (esDenegado(m) || m.suspicious) && (!estado.alertasMias || esPropio(m)));
     $("n-sospechosas").textContent = alertas.filter(m => m.suspicious).length;
@@ -521,7 +499,6 @@
     }));
   }
 
-  // ---------------- Gráficos ----------------
   function pintarDona(idSvg, idLeyenda, lista, alFiltrar) {
     const total = lista.length;
     const segmentos = [
@@ -689,14 +666,13 @@
     pintarBarras("saldos-globales", { maximo: 8 });
   }
 
-  // ---------------- Render (una vez por cuadro) ----------------
   let pendiente = false;
   let resaltarSiguiente = null;
   function renderizar(resaltar) {
     if (resaltar) resaltarSiguiente = resaltar;
     if (pendiente) return;
     pendiente = true;
-    // En segundo plano el navegador pausa requestAnimationFrame: ahí se pinta con un timeout
+
     const programar = document.hidden ? (fn => setTimeout(fn, 0)) : requestAnimationFrame;
     programar(() => {
       pendiente = false;
@@ -716,7 +692,6 @@
     });
   }
 
-  // ---------------- Simulador ----------------
   const ESPERADOS = {
     completada: { texto: "Completada", icono: "check" },
     denegada: { texto: "Denegada", icono: "alertas" },
@@ -785,7 +760,6 @@
     }));
   }
 
-  /** Envía los pasos en orden (la cola de comandos conserva ese orden) y sigue cada tx_id en vivo. */
   async function ejecutarCorrida(boton, nombre, pasos, origen) {
     $("bitacora-vacia").hidden = true;
     const corrida = el("article", "corrida");
@@ -851,7 +825,7 @@
       info.esperado.textContent = "Completada; el detector de fraude la está analizando…";
       info.esperado.className = "esperado-texto";
       info.resuelto = false;
-      // Si el detector no responde en 20 s, se informa la diferencia
+
       clearTimeout(info.espera);
       info.espera = setTimeout(() => {
         if (info.resuelto) return;
@@ -877,7 +851,6 @@
       document.createTextNode(bien ? "El sistema respondió como se esperaba." : "El resultado no coincide con lo esperado; revisa los pasos marcados."));
   }
 
-  /** Predice el resultado de una simulación personalizada con las mismas reglas del backend. */
   function predecir(saldo, monto, envios, divisa) {
     const resultados = [];
     let disponible = saldo;
@@ -924,7 +897,6 @@
       motivos.length ? " (" + motivos.join(", ") + ")." : ".");
   }
 
-  // ---------------- Comunicación con el backend ----------------
   function conectar() {
     const ws = new WebSocket(WS_URL);
     ws.onopen = () => { $("conexion").classList.add("on"); $("conexion-texto").textContent = "En vivo"; };
@@ -943,7 +915,7 @@
         estado.movimientos.clear();
         (datos.transactions || []).forEach(m => {
           estado.movimientos.set(m.tx_id, m);
-          // El historial ya conocido no dispara alertas en pantalla
+
           if (esDenegado(m)) estado.alertadas.add(m.tx_id + ":den");
           if (m.suspicious) estado.alertadas.add(m.tx_id + ":sos");
         });
@@ -960,7 +932,7 @@
       estado.pendientes.delete(m.tx_id);
       toast("Listo: " + descripcion, "ok");
     } else if (descripcion) {
-      estado.pendientes.delete(m.tx_id); // la alerta en pantalla explica la denegación
+      estado.pendientes.delete(m.tx_id);
     }
     if (esDenegado(m) || m.suspicious) alertaEnPantalla(m);
     estado.movimientos.set(m.tx_id, m);
@@ -968,7 +940,6 @@
     renderizar(m.tx_id);
   }
 
-  /** El titular opera con su token; las simulaciones (cuentas sim_) van sin token. */
   async function post(ruta, cuerpo, descripcion, conSesion = true) {
     const headers = { "Content-Type": "application/json" };
     if (conSesion) headers.Authorization = "Bearer " + SESION.token;
@@ -998,7 +969,7 @@
     $("salir").disabled = true;
     try {
       await fetch(API + "/auth/logout", { method: "POST", headers: { Authorization: "Bearer " + SESION.token } });
-    } catch (e) { /* aunque el servidor no responda, la sesión local se cierra */ }
+    } catch (e) {  }
     terminarSesion("Cerraste tu sesión.", "info");
   }
 
@@ -1006,11 +977,10 @@
     try {
       const r = await fetch(API + "/auth/me", { headers: { Authorization: "Bearer " + SESION.token } });
       if (r.status === 401) sesionVencida();
-    } catch (e) { /* sin conexión: se reintenta en la próxima operación */ }
+    } catch (e) {  }
     setTimeout(sesionVencida, Math.max(0, new Date(SESION.expires_at) - new Date()));
   }
 
-  // ---------------- Eventos ----------------
   document.querySelectorAll("svg[data-icono]").forEach(n => {
     n.setAttribute("class", "icono-svg");
     if (n.dataset.icono !== "tema") dibujarIcono(n, n.dataset.icono);
@@ -1022,7 +992,6 @@
   document.addEventListener("keydown", e => { if (e.key === "Escape") cerrarMenuMovil(); });
   $("salir").addEventListener("click", cerrarSesion);
 
-  // Accesos rápidos y enlaces que abren una pestaña concreta de "Mover dinero"
   document.querySelectorAll("[data-ir]").forEach(b => b.addEventListener("click", () => {
     if (b.dataset.pestana) pestanaPendiente = b.dataset.pestana;
     if (location.hash === "#" + b.dataset.ir) irA(b.dataset.ir);
@@ -1084,7 +1053,6 @@
     ejecutarCorrida(e.target.querySelector("button[type=submit]"), "Simulación personalizada", pasos, u.origen);
   });
 
-  // Gráficos responsivos y sensibles al tema del sistema
   if (window.ResizeObserver) {
     let anchoPrevio = 0;
     new ResizeObserver(([entrada]) => {
@@ -1094,7 +1062,6 @@
   }
   matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { pintarControlesTema(); renderizar(); });
 
-  // ---------------- Arranque ----------------
   $("perfil-usuario").textContent = "@" + SESION.username;
   $("perfil-nombre").textContent = SESION.full_name || "Cliente";
   irA(location.hash.slice(1) || "inicio");

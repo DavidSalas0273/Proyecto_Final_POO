@@ -1,14 +1,13 @@
 name: ledger-bancario
 
-# ---------------------------------------------------------------------------
-# Variables comunes (anclas YAML)
-# ---------------------------------------------------------------------------
+# RabbitMQ: datos de conexión que reciben los microservicios
 x-rabbit-env: &rabbit-env
   RABBITMQ_HOST: rabbitmq
   RABBITMQ_PORT: "5672"
   RABBITMQ_USER: ${RABBITMQ_USER:-ledger}
   RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-ledger}
 
+# Kafka: dirección del broker que reciben los microservicios
 x-kafka-env: &kafka-env
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
@@ -23,9 +22,6 @@ x-jvm-env: &jvm-env
   JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+ExitOnOutOfMemoryError"
 
 services:
-  # =========================================================================
-  # Infraestructura
-  # =========================================================================
   postgres-db:
     image: postgres:16-alpine
     container_name: postgres-db
@@ -49,6 +45,7 @@ services:
           memory: 512M
     restart: unless-stopped
 
+  # Kafka: Zookeeper coordina el broker de Kafka
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.3
     container_name: zookeeper
@@ -70,6 +67,7 @@ services:
           memory: 512M
     restart: unless-stopped
 
+  # Kafka: broker del log de eventos (topics transactions_log y fraud_alerts)
   kafka:
     image: confluentinc/cp-kafka:7.5.3
     container_name: kafka
@@ -103,6 +101,7 @@ services:
           memory: 1G
     restart: unless-stopped
 
+  # RabbitMQ: broker de comandos (colas transfer_commands y email_queue); consola en el puerto 15672
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     container_name: rabbitmq
@@ -110,7 +109,7 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-ledger}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-ledger}
     ports:
-      - "15672:15672"   # consola de administración
+      - "15672:15672"
     networks:
       - messaging-net
       - public-net
@@ -126,15 +125,12 @@ services:
           memory: 512M
     restart: unless-stopped
 
-  # =========================================================================
-  # Microservicios Spring Boot
-  # =========================================================================
   transaction_api:
     build: ./transaction_api
     image: ledger/transaction-api:1.0.0
     container_name: transaction_api
     environment:
-      <<: [*rabbit-env, *postgres-env, *jvm-env]   # PostgreSQL: usuarios y sesiones de la banca en línea
+      <<: [*rabbit-env, *postgres-env, *jvm-env]
       LEDGER_SESION_MINUTOS: "30"
     ports:
       - "8080:8080"
@@ -209,7 +205,7 @@ services:
     environment:
       <<: [*kafka-env, *jvm-env]
     ports:
-      - "8081:8081"   # WebSocket ws://localhost:8081/ws
+      - "8081:8081"
     networks:
       - messaging-net
       - public-net
@@ -265,7 +261,6 @@ services:
   email_worker:
     build: ./email_worker
     image: ledger/email-worker:1.0.0
-    # Sin container_name: necesario para poder escalar con deploy.replicas
     environment:
       <<: [*rabbit-env, *jvm-env]
       EMAIL_SIMULATED_LATENCY_MS: "500"
@@ -282,12 +277,6 @@ services:
           memory: 384M
     restart: on-failure
 
-# ---------------------------------------------------------------------------
-# Segmentación de redes
-#  - public-net: única red con puertos publicados al host.
-#  - messaging-net: tráfico interno Kafka/Zookeeper/RabbitMQ (sin salida externa).
-#  - persistence-net: tráfico a PostgreSQL, solo para los servicios que persisten.
-# ---------------------------------------------------------------------------
 networks:
   public-net:
     driver: bridge

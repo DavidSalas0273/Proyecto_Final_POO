@@ -10,10 +10,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/** Adaptador: publica el comando como JSON en la Work Queue transfer_commands. */
 @Component
 public class RabbitTransferCommandPublisher implements TransferCommandPublisher {
-
     private static final Logger log = LoggerFactory.getLogger(RabbitTransferCommandPublisher.class);
 
     private final RabbitTemplate rabbitTemplate;
@@ -30,6 +28,7 @@ public class RabbitTransferCommandPublisher implements TransferCommandPublisher 
     @Override
     public void publicar(ComandoLedger comando) {
         try {
+            // RabbitMQ: publica el comando en la cola transfer_commands (exchange por defecto)
             rabbitTemplate.convertAndSend("", queue, objectMapper.writeValueAsString(comando));
             log.info("Comando {} publicado en la cola {}", comando.txId(), queue);
         } catch (JsonProcessingException e) {

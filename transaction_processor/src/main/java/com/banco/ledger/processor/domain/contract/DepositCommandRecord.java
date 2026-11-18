@@ -8,14 +8,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Comando de recarga de saldo para un usuario (validación Fail-Fast). */
 public record DepositCommandRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("to_user") String toUser,
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("currency") String currency,
         @JsonProperty("requested_at") Instant requestedAt) implements ComandoLedger {
-
     public DepositCommandRecord {
         txId = requerirTexto(txId, "tx_id");
         toUser = requerirTexto(toUser, "to_user");

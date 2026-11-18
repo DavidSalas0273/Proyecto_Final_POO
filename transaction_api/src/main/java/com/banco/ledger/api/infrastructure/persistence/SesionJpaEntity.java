@@ -9,12 +9,10 @@ import org.hibernate.annotations.Immutable;
 
 import java.time.Instant;
 
-/** Tabla sesiones: una fila por sesión abierta; se borra al salir o al vencer. */
 @Entity
 @Immutable
 @Table(name = "sesiones")
 public class SesionJpaEntity {
-
     @Id
     @Column(name = "token", length = 64)
     private String token;
@@ -29,7 +27,6 @@ public class SesionJpaEntity {
     private Instant expiraEn;
 
     protected SesionJpaEntity() {
-        // requerido por JPA
     }
 
     private SesionJpaEntity(Sesion sesion) {

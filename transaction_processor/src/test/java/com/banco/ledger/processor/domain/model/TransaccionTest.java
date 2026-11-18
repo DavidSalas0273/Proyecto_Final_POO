@@ -11,7 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TransaccionTest {
-
     private static final Instant T0 = Instant.parse("2026-11-11T11:30:00Z");
     private static final Instant T1 = Instant.parse("2026-11-11T11:30:01Z");
 
@@ -36,14 +35,11 @@ class TransaccionTest {
 
     @Test
     void flujoNormalRecibidaProcesandoCompletada() {
-        // Arrange
         Transaccion tx = nuevaTransferencia("50");
 
-        // Act
         tx.iniciarProcesamiento(T0);
         tx.ejecutarTransferencia(cuentaA, cuentaB, T1);
 
-        // Assert
         assertThat(tx.estadoActual()).isEqualTo("COMPLETED");
         assertThat(cuentaA.saldo()).isEqualTo(MontoDinero.de("50", "USD"));
         assertThat(cuentaB.saldo()).isEqualTo(MontoDinero.de("50", "USD"));
@@ -51,15 +47,12 @@ class TransaccionTest {
 
     @Test
     void recargaSoloAcreditaAlTitular() {
-        // Arrange
         Transaccion recarga = Transaccion.recibirRecarga(new TransactionId("tx-r"), "B",
                 MontoDinero.de("250", "USD"), T0);
         recarga.iniciarProcesamiento(T0);
 
-        // Act
         recarga.ejecutarRecarga(cuentaB, T1);
 
-        // Assert
         assertThat(recarga.tipo()).isEqualTo(TipoMovimiento.DEPOSIT);
         assertThat(recarga.origen()).isEmpty();
         assertThat(recarga.estadoActual()).isEqualTo("COMPLETED");
@@ -99,14 +92,11 @@ class TransaccionTest {
 
     @Test
     void rechazoPorFondosInsuficientesEsEstadoFinal() {
-        // Arrange
         Transaccion tx = nuevaTransferencia("500");
         tx.iniciarProcesamiento(T0);
 
-        // Act
         tx.rechazarPorFondosInsuficientes(T1);
 
-        // Assert
         assertThat(tx.estadoActual()).isEqualTo("REJECTED");
         assertThat(tx.motivo()).contains(Transaccion.MOTIVO_FONDOS_INSUFICIENTES);
         assertThatThrownBy(() -> tx.ejecutarTransferencia(cuentaA, cuentaB, T1))
@@ -131,15 +121,12 @@ class TransaccionTest {
 
     @Test
     void transaccionReconstituidaContinuaSuCicloHastaSospechosa() {
-        // Arrange: se recupera del ledger en estado COMPLETADA
         Transaccion tx = Transaccion.reconstituir(new TransactionId("tx-9"), TipoMovimiento.TRANSFER, "C", "D",
                 MontoDinero.de("20000", "USD"),
                 com.banco.ledger.processor.domain.estado.EstadoCompletada.INSTANCIA, null, T0);
 
-        // Act
         tx.marcarComoSospechosa("HIGH_VALUE_TRANSACTION", T1);
 
-        // Assert
         assertThat(tx.estadoActual()).isEqualTo("SUSPICIOUS");
         assertThat(tx.admiteMarcaDeSospecha()).isFalse();
         TransactionEventRecord evento = tx.aEvento();

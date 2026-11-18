@@ -32,7 +32,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class DetectorFraudeTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:31:04Z");
 
     @Mock
@@ -61,10 +60,8 @@ class DetectorFraudeTest {
 
     @Test
     void transaccionDeAltoValorSeAuditaYPublicaUnaVez() {
-        // Act
         Optional<FraudAlertRecord> alerta = detector.analizar(evento("20000", "COMPLETED"));
 
-        // Assert
         assertThat(alerta).isPresent();
         ArgumentCaptor<RegistroAuditoria> registro = ArgumentCaptor.forClass(RegistroAuditoria.class);
         verify(repositorio, times(1)).registrar(registro.capture());

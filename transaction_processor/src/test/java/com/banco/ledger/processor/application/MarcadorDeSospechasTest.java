@@ -30,7 +30,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MarcadorDeSospechasTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:31:04Z");
     private static final FraudAlertRecord ALERTA = new FraudAlertRecord("tx-9", "HIGH_VALUE_TRANSACTION");
 
@@ -51,14 +50,11 @@ class MarcadorDeSospechasTest {
 
     @Test
     void transaccionCompletadaPasaASospechosaSeAuditaYSePublica() {
-        // Arrange
         when(transacciones.buscar(new TransactionId("tx-9"))).thenReturn(Optional.of(registrada("COMPLETED")));
         when(clock.instant()).thenReturn(AHORA);
 
-        // Act
         Optional<TransactionEventRecord> resultado = marcador.marcar(ALERTA);
 
-        // Assert
         ArgumentCaptor<TransactionEventRecord> evento = ArgumentCaptor.forClass(TransactionEventRecord.class);
         verify(transacciones, times(1)).registrarCambioDeEstado(evento.capture());
         verify(publicador, times(1)).publicar(evento.getValue());

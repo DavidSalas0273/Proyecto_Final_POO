@@ -8,10 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.PrintStream;
 
-/** Adaptador que simula el envío imprimiendo en consola. */
 @Component
 public class ConsolaDespachadorEmail implements DespachadorEmail {
-
     private final PrintStream salida;
     private final long latenciaSimuladaMs;
 

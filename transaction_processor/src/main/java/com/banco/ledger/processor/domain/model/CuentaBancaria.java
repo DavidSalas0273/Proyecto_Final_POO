@@ -2,12 +2,7 @@ package com.banco.ledger.processor.domain.model;
 
 import java.util.Objects;
 
-/**
- * Entidad rica: encapsula el saldo y protege la invariante "el saldo nunca es negativo".
- * No expone setters: el saldo solo cambia mediante debitar() y acreditar().
- */
 public class CuentaBancaria {
-
     private final String titular;
     private MontoDinero saldo;
 
@@ -19,12 +14,10 @@ public class CuentaBancaria {
         this.saldo = Objects.requireNonNull(saldo, "El saldo no puede ser nulo");
     }
 
-    /** Abre una cuenta nueva con un saldo inicial. */
     public static CuentaBancaria abrir(String titular, MontoDinero saldoInicial) {
         return new CuentaBancaria(titular, saldoInicial);
     }
 
-    /** Reconstruye una cuenta existente desde la persistencia. */
     public static CuentaBancaria reconstituir(String titular, MontoDinero saldo) {
         return new CuentaBancaria(titular, saldo);
     }
@@ -54,7 +47,6 @@ public class CuentaBancaria {
         return titular;
     }
 
-    /** Lectura del saldo como Value Object inmutable (no permite mutación externa). */
     public MontoDinero saldo() {
         return saldo;
     }

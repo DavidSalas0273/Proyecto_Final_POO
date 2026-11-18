@@ -9,10 +9,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UsuarioTest {
-
     private static final Instant T0 = Instant.parse("2026-11-17T09:00:00Z");
 
-    /** Verificador falso: la "contraseña correcta" es la que coincide con el hash tal cual. */
     private static final Usuario.VerificadorContrasena VERIFICADOR = (plana, hash) -> ("hash:" + plana).equals(hash);
 
     private Usuario usuario;
@@ -39,20 +37,16 @@ class UsuarioTest {
 
     @Test
     void cadaFalloSumaUnIntento() {
-        // Act
         fallar(2, T0);
 
-        // Assert
         assertThat(usuario.intentosFallidos()).isEqualTo(2);
         assertThat(usuario.bloqueoVigente(T0)).isEmpty();
     }
 
     @Test
     void elQuintoFalloBloqueaQuinceMinutosAunqueLuegoAcierte() {
-        // Act
         fallar(Usuario.MAX_INTENTOS, T0);
 
-        // Assert
         assertThat(usuario.bloqueoVigente(T0)).contains(T0.plus(Usuario.DURACION_BLOQUEO));
         assertThatThrownBy(() -> usuario.autenticar("clave2026", VERIFICADOR, T0.plusSeconds(60)))
                 .isInstanceOf(CuentaBloqueadaException.class);

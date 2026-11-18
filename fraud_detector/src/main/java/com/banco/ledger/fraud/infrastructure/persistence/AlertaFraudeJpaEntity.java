@@ -12,12 +12,10 @@ import org.hibernate.annotations.Immutable;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Registro de auditoría forense (solo inserción) de una alerta de fraude. */
 @Entity
 @Immutable
 @Table(name = "alertas_fraude")
 public class AlertaFraudeJpaEntity {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -38,7 +36,6 @@ public class AlertaFraudeJpaEntity {
     private Instant detectedAt;
 
     protected AlertaFraudeJpaEntity() {
-        // requerido por JPA
     }
 
     private AlertaFraudeJpaEntity(FraudAlertRecord alerta) {

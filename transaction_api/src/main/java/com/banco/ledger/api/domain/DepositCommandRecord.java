@@ -6,17 +6,12 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 
-/**
- * Comando inmutable "el usuario X recarga su saldo con Y".
- * Viaja por la misma Work Queue que las transferencias para conservar el orden.
- */
 public record DepositCommandRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("to_user") String toUser,
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("currency") String currency,
         @JsonProperty("requested_at") Instant requestedAt) implements ComandoLedger {
-
     public DepositCommandRecord {
         txId = requerirTexto(txId, "tx_id");
         toUser = requerirTexto(toUser, "user");

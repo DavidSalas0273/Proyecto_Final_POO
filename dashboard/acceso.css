@@ -1,21 +1,12 @@
-/*
- * Ledger · acceso (login y registro)
- * Identidad: impresión de seguridad de billetes. El único elemento llamativo es la
- * roseta guilloché del panel de marca; todo lo demás es sobrio y disciplinado.
- * Layout: panel de marca (izquierda, 44 %) + formulario alineado a la izquierda
- * (máx. 400 px). En móvil el panel se reduce a una franja superior.
- * Movimiento (Emil Kowalski): ease-out fuerte, botones con scale(.97) al presionar,
- * nada animado en acciones frecuentes, y respeto a prefers-reduced-motion.
- */
 :root {
-  --ink: #10233a;           /* tinta de grabado: panel de marca y botón principal */
+  --ink: #10233a;
   --ink-press: #0a1a2c;
-  --paper: #f3f5f7;         /* fondo frío, no crema */
+  --paper: #f3f5f7;
   --surface: #ffffff;
   --line: #d6dce3;
   --text: #13202e;
   --muted: #5b6b7c;
-  --accent: #1e7a5c;        /* verde billete: foco, enlaces, éxito, guilloché */
+  --accent: #1e7a5c;
   --accent-soft: #e3f1ec;
   --danger: #b3261e;
   --danger-soft: #fbeceb;
@@ -23,7 +14,7 @@
   --warn-soft: #fbf0df;
   --on-ink: #f2f5f2;
   --on-ink-muted: #a9b8c9;
-  --primario: #10233a;      /* acción principal: tinta en claro, verde billete en oscuro */
+  --primario: #10233a;
   --primario-press: #0a1a2c;
   --on-primario: #f2f5f2;
 
@@ -71,7 +62,6 @@ button, input { font: inherit; color: inherit; }
 a { color: var(--accent); text-underline-offset: 3px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* ---------------- Estructura ---------------- */
 .acceso {
   min-height: 100%;
   display: grid;
@@ -81,7 +71,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .acceso { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
 }
 
-/* ---------------- Panel de marca ---------------- */
 .marca {
   position: relative;
   overflow: hidden;
@@ -140,7 +129,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .marca ul, .marca small { display: none; }
 }
 
-/* ---------------- Formulario ---------------- */
 .panel {
   display: flex;
   align-items: center;
@@ -182,7 +170,7 @@ a { color: var(--accent); text-underline-offset: 3px; }
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
-  font-size: 16px; /* evita el zoom automático en iOS */
+  font-size: 16px;
   outline: none;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -210,7 +198,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   .mostrar:hover { color: var(--text); background: var(--paper); }
 }
 
-/* Mensajes por campo: aparecen sin saltos bruscos */
 .error-campo, .bloq-mayus {
   font-size: 13px;
   min-height: 0;
@@ -223,7 +210,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .error-campo.visible, .bloq-mayus.visible { opacity: 1; transform: none; }
 .error-campo:empty { display: none; }
 
-/* ---------------- Fortaleza de la contraseña ---------------- */
 .fortaleza { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-top: 2px; }
 .fortaleza span { height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .fortaleza span::after {
@@ -252,11 +238,9 @@ a { color: var(--accent); text-underline-offset: 3px; }
   border-color: var(--accent);
 }
 
-/* ---------------- Casilla ---------------- */
 .campo > .casilla { display: grid; grid-template-columns: 20px 1fr; gap: 10px; align-items: start; font-size: 14px; font-weight: 400; color: var(--muted); cursor: pointer; }
 .casilla input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
 
-/* ---------------- Alerta del formulario ---------------- */
 .alerta {
   padding: 12px 14px;
   border-radius: var(--radius);
@@ -272,7 +256,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
 .alerta.aviso { background: var(--warn-soft); color: var(--warn); border-color: color-mix(in srgb, var(--warn) 25%, transparent); }
 .alerta.visible { opacity: 1; transform: none; }
 
-/* ---------------- Botón principal ---------------- */
 .boton {
   position: relative;
   height: 50px;
@@ -318,7 +301,6 @@ a { color: var(--accent); text-underline-offset: 3px; }
   color: var(--muted);
 }
 
-/* Entrada de página: un solo momento (el formulario aparece mientras se dibuja la roseta) */
 @media (prefers-reduced-motion: no-preference) {
   .formulario { animation: aparecer 320ms var(--ease-out) 80ms both; }
 }

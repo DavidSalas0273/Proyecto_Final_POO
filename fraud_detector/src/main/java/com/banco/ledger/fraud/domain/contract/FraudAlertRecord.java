@@ -5,14 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Alerta de fraude inmutable publicada en el topic fraud_alerts (key = tx_id). */
 public record FraudAlertRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("reason") String reason,
         @JsonProperty("from_user") String fromUser,
         @JsonProperty("amount") BigDecimal amount,
         @JsonProperty("detected_at") Instant detectedAt) {
-
     public FraudAlertRecord {
         if (txId == null || txId.isBlank()) {
             throw new IllegalArgumentException("tx_id no puede ser nulo ni vacío");

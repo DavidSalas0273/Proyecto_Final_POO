@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ServicioEnvioEmailTest {
-
     @Mock
     private DespachadorEmail despachador;
     @InjectMocks
@@ -21,13 +20,10 @@ class ServicioEnvioEmailTest {
 
     @Test
     void cadaComandoSeDespachaExactamenteUnaVez() {
-        // Arrange
         EmailCommandRecord email = new EmailCommandRecord("user_a@email.com", "Envió $50 a B");
 
-        // Act
         servicio.procesar(email);
 
-        // Assert
         verify(despachador, times(1)).despachar(email);
     }
 }

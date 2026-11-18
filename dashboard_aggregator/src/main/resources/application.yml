@@ -4,6 +4,7 @@ server:
 spring:
   application:
     name: dashboard-aggregator
+  # Kafka: conexión al broker y serializadores de los mensajes
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -12,6 +13,7 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 ledger:
+  # Kafka: nombres de los topics
   kafka:
     transactions-topic: transactions_log
     fraud-alerts-topic: fraud_alerts

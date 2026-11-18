@@ -5,13 +5,7 @@ import com.banco.ledger.processor.domain.model.Transaccion;
 
 import java.util.Optional;
 
-/**
- * Patrón Strategy: cada regla de riesgo/validación es intercambiable.
- * Devuelve el motivo de rechazo o vacío si el movimiento cumple la regla.
- * La cuenta de origen es opcional porque las recargas no tienen origen.
- */
 @FunctionalInterface
 public interface ReglaValidacionTransaccion {
-
     Optional<String> evaluar(Transaccion transaccion, Optional<CuentaBancaria> origen, CuentaBancaria destino);
 }

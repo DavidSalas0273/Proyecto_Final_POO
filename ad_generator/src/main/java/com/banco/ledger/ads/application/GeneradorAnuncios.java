@@ -6,10 +6,8 @@ import com.banco.ledger.ads.domain.contract.EmailCommandRecord;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-/** Caso de uso: generar la siguiente campaña y encolarla para todos los usuarios. */
 @Service
 public class GeneradorAnuncios {
-
     private final CatalogoPromociones catalogo;
     private final PublicadorAnuncios publicador;
     private final String audiencia;

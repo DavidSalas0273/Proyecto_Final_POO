@@ -26,7 +26,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TransferServiceTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:00Z");
 
     @Mock
@@ -43,13 +42,10 @@ class TransferServiceTest {
 
     @Test
     void publicaExactamenteUnComandoConElTxIdGenerado() {
-        // Arrange
         when(txIdGenerator.nuevoId()).thenReturn("tx-123");
 
-        // Act
         TransferCommandRecord resultado = service.solicitarTransferencia("A", "B", new BigDecimal("50"), "USD");
 
-        // Assert
         ArgumentCaptor<TransferCommandRecord> captor = ArgumentCaptor.forClass(TransferCommandRecord.class);
         verify(publisher, times(1)).publicar(captor.capture());
         assertThat(captor.getValue()).isEqualTo(resultado);
@@ -59,13 +55,10 @@ class TransferServiceTest {
 
     @Test
     void recargaPublicaExactamenteUnComandoDeposit() {
-        // Arrange
         when(txIdGenerator.nuevoId()).thenReturn("tx-r");
 
-        // Act
         DepositCommandRecord recarga = service.solicitarRecarga("A", new BigDecimal("100"), "USD");
 
-        // Assert
         verify(publisher, times(1)).publicar(recarga);
         assertThat(recarga.toUser()).isEqualTo("A");
         assertThat(recarga.txId()).isEqualTo("tx-r");
@@ -73,11 +66,9 @@ class TransferServiceTest {
 
     @Test
     void noPublicaNadaSiElComandoEsInvalido() {
-        // Arrange
         when(txIdGenerator.nuevoId()).thenReturn("tx-123");
         BigDecimal montoNegativo = new BigDecimal("-5");
 
-        // Act & Assert
         assertThatThrownBy(() -> service.solicitarTransferencia("A", "B", montoNegativo, "USD"))
                 .isInstanceOf(IllegalArgumentException.class);
         verify(publisher, never()).publicar(any());

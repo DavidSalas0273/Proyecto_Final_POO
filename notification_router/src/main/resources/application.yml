@@ -4,11 +4,13 @@ spring:
   main:
     keep-alive: true
     web-application-type: none
+  # RabbitMQ: conexión al broker (host, puerto y credenciales)
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:ledger}
     password: ${RABBITMQ_PASSWORD:ledger}
+  # Kafka: conexión al broker y serializadores de los mensajes
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
@@ -18,8 +20,10 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 ledger:
+  # Kafka: nombres de los topics
   kafka:
     transactions-topic: transactions_log
+  # RabbitMQ: nombres de las colas
   rabbit:
     email-queue: email_queue
   email:

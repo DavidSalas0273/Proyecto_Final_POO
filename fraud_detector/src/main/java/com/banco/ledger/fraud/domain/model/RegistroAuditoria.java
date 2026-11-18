@@ -7,17 +7,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Objects;
 
-/**
- * Entidad rica de auditoría forense: deja constancia de que una transacción fue
- * declarada sospechosa, por qué motivo y cuándo.
- * <ul>
- *   <li>Solo se puede abrir sobre una transferencia COMPLETADA (invariante de negocio).</li>
- *   <li>Es inmutable: un registro de auditoría no se corrige, se agrega otro.</li>
- *   <li>No expone setters; produce la alerta pública con {@link #aAlerta()}.</li>
- * </ul>
- */
 public final class RegistroAuditoria {
-
     private final String txId;
     private final String usuario;
     private final BigDecimal monto;
@@ -32,12 +22,6 @@ public final class RegistroAuditoria {
         this.detectadaEn = detectadaEn;
     }
 
-    /**
-     * Abre el expediente de sospecha para un evento del ledger.
-     *
-     * @throws IllegalStateException    si el evento no es una transferencia completada
-     * @throws IllegalArgumentException si falta el motivo o la fecha
-     */
     public static RegistroAuditoria abrirPorSospecha(TransactionEventRecord evento, String motivo,
                                                      Instant detectadaEn) {
         Objects.requireNonNull(evento, "El evento es obligatorio");
@@ -55,7 +39,6 @@ public final class RegistroAuditoria {
         return new RegistroAuditoria(evento.txId(), evento.fromUser(), evento.amount(), motivo.trim(), detectadaEn);
     }
 
-    /** Proyección pública del registro: la alerta que se publica en el topic fraud_alerts. */
     public FraudAlertRecord aAlerta() {
         return new FraudAlertRecord(txId, motivo, usuario, monto, detectadaEn);
     }

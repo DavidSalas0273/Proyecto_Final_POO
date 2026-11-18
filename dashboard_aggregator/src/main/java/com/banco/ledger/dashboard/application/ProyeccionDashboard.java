@@ -9,10 +9,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/** Caso de uso: proyectar los eventos de Kafka y difundir los cambios por WebSocket. */
 @Service
 public class ProyeccionDashboard {
-
     private final VistaMaterializada vista;
     private final DifusorDashboard difusor;
 

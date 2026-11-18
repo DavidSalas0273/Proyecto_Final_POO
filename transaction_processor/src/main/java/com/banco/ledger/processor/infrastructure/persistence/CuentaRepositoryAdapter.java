@@ -6,10 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
-/** Adaptador de persistencia de cuentas (dominio <-> JPA). */
 @Repository
 public class CuentaRepositoryAdapter implements CuentaRepository {
-
     private final SpringDataCuentaRepository jpa;
 
     public CuentaRepositoryAdapter(SpringDataCuentaRepository jpa) {

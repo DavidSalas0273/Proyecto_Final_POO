@@ -10,10 +10,8 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-/** Adaptador RabbitMQ: publica el comando de email en la Work Queue email_queue. */
 @Component
 public class RabbitEmailCommandPublisher implements PublicadorComandosEmail {
-
     private static final Logger log = LoggerFactory.getLogger(RabbitEmailCommandPublisher.class);
 
     private final RabbitTemplate rabbitTemplate;
@@ -30,6 +28,7 @@ public class RabbitEmailCommandPublisher implements PublicadorComandosEmail {
     @Override
     public void publicar(EmailCommandRecord comando) {
         try {
+            // RabbitMQ: publica el comando de email en la cola email_queue
             rabbitTemplate.convertAndSend("", queue, objectMapper.writeValueAsString(comando));
             log.info("Notificación encolada para {}", comando.to());
         } catch (JsonProcessingException e) {

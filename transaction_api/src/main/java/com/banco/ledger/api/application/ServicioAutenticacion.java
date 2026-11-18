@@ -19,13 +19,8 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Optional;
 
-/**
- * Casos de uso de la banca en línea: abrir cuenta, ingresar, validar la sesión y salir.
- * Solo depende de puertos (DIP): no sabe de BCrypt, JPA ni HTTP.
- */
 @Service
 public class ServicioAutenticacion {
-
     private final RepositorioUsuarios usuarios;
     private final RepositorioSesiones sesiones;
     private final CifradorContrasenas cifrador;
@@ -44,7 +39,6 @@ public class ServicioAutenticacion {
         this.clock = clock;
     }
 
-    /** Abre la cuenta y deja al cliente con la sesión iniciada. */
     @Transactional
     public Sesion registrar(DatosRegistro datos) {
         exigirDisponible(!usuarios.existeUsuario(datos.usuario()), "username",
@@ -59,10 +53,6 @@ public class ServicioAutenticacion {
         return abrirSesion(usuario);
     }
 
-    /**
-     * Verifica las credenciales. Los intentos fallidos se guardan aunque la operación
-     * termine en excepción, para que la política de bloqueo funcione.
-     */
     @Transactional(noRollbackFor = {CredencialesInvalidasException.class, CuentaBloqueadaException.class})
     public Sesion iniciarSesion(String identificador, String contrasena) {
         Usuario usuario = Optional.ofNullable(identificador)
@@ -77,7 +67,6 @@ public class ServicioAutenticacion {
         return abrirSesion(usuario);
     }
 
-    /** Devuelve la sesión si existe y no ha vencido; borra las vencidas. */
     @Transactional
     public Optional<Sesion> sesionVigente(String token) {
         Instant ahora = clock.instant();
@@ -86,7 +75,6 @@ public class ServicioAutenticacion {
         return sesion.filter(s -> s.estaVigente(ahora));
     }
 
-    /** Titular de una sesión válida; si no lo es, lanza SesionInvalidaException (HTTP 401). */
     public String titularDe(String token) {
         return sesionVigente(token).map(Sesion::usuario).orElseThrow(SesionInvalidaException::new);
     }

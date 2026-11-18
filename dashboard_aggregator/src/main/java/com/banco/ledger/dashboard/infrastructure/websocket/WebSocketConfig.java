@@ -8,7 +8,6 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @Configuration
 @EnableWebSocket
 public class WebSocketConfig implements WebSocketConfigurer {
-
     private final DashboardWebSocketHandler handler;
 
     public WebSocketConfig(DashboardWebSocketHandler handler) {

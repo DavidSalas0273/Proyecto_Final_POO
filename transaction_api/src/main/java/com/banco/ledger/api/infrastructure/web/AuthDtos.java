@@ -6,9 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Instant;
 
-/** DTO inmutables de los endpoints /auth. */
 final class AuthDtos {
-
     private AuthDtos() {
     }
 
@@ -36,12 +34,10 @@ final class AuthDtos {
                           @JsonProperty("username") String username,
                           @JsonProperty("full_name") String fullName,
                           @JsonProperty("expires_at") Instant expiresAt) {
-
         static SesionResponse con(Sesion sesion) {
             return new SesionResponse(sesion.token(), sesion.usuario(), sesion.nombreCompleto(), sesion.expiraEn());
         }
 
-        /** Perfil sin el token, para GET /auth/me. */
         static SesionResponse sinToken(Sesion sesion) {
             return new SesionResponse(null, sesion.usuario(), sesion.nombreCompleto(), sesion.expiraEn());
         }

@@ -12,16 +12,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TransferCommandRecordTest {
-
     private static final Instant AHORA = Instant.parse("2026-11-11T11:30:00Z");
 
     @Test
     void creaComandoValidoNormalizandoDivisa() {
-        // Arrange & Act
         TransferCommandRecord comando = new TransferCommandRecord(
                 "tx-1", " A ", "B", new BigDecimal("50"), "usd", AHORA);
 
-        // Assert
         assertThat(comando.fromUser()).isEqualTo("A");
         assertThat(comando.currency()).isEqualTo("USD");
         assertThat(comando.amount()).isEqualByComparingTo("50");

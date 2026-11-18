@@ -4,6 +4,7 @@ spring:
   main:
     keep-alive: true
     web-application-type: none
+  # RabbitMQ: conexión al broker (host, puerto y credenciales)
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -11,6 +12,7 @@ spring:
     password: ${RABBITMQ_PASSWORD:ledger}
 
 ledger:
+  # RabbitMQ: nombres de las colas
   rabbit:
     email-queue: email_queue
   ads:

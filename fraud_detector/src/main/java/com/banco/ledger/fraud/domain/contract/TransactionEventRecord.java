@@ -5,10 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/**
- * Evento del ledger consumido desde transactions_log (solo los campos que usa el detector).
- * type: TRANSFER o DEPOSIT; si falta se asume TRANSFER (eventos antiguos).
- */
 public record TransactionEventRecord(
         @JsonProperty("tx_id") String txId,
         @JsonProperty("from_user") String fromUser,
@@ -19,7 +15,6 @@ public record TransactionEventRecord(
         @JsonProperty("reason") String reason,
         @JsonProperty("timestamp") Instant timestamp,
         @JsonProperty("type") String type) {
-
     public static final String ESTADO_COMPLETADO = "COMPLETED";
     public static final String TIPO_TRANSFERENCIA = "TRANSFER";
 
@@ -43,7 +38,6 @@ public record TransactionEventRecord(
         return ESTADO_COMPLETADO.equals(status);
     }
 
-    /** Solo las transferencias completadas mueven dinero entre usuarios y se analizan. */
     public boolean esTransferenciaCompletada() {
         return estaCompletada() && TIPO_TRANSFERENCIA.equals(type);
     }

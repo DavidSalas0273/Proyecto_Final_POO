@@ -1,16 +1,6 @@
 package com.banco.ledger.processor.domain.estado;
 
-/**
- * Patrón State: cada estado concreto sobrescribe únicamente las transiciones que
- * permite. Las demás heredan el comportamiento por defecto (IllegalStateException),
- * evitando estructuras if-else / switch sobre el estado.
- *
- * RECIBIDA -> PROCESANDO -> COMPLETADA -> SOSPECHOSA
- *                       \-> RECHAZADA
- */
 public interface EstadoTransaccion {
-
-    /** Código publicado en el ledger (contrato de los eventos de Kafka). */
     String codigo();
 
     default EstadoTransaccion iniciarProcesamiento() {
@@ -29,7 +19,6 @@ public interface EstadoTransaccion {
         throw transicionInvalida("marcar como sospechosa");
     }
 
-    /** Indica si desde este estado se permite la transición a SOSPECHOSA (sin preguntar por el tipo). */
     default boolean admiteSospecha() {
         return false;
     }
