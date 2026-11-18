@@ -40,87 +40,14 @@
 
   const $ = (sel, raiz = document) => raiz.querySelector(sel);
 
-  // ---------------- Roseta guilloché ----------------
+  // ---------------- Roseta guilloché (guilloche.js) ----------------
+  // La roseta "se sale" por la esquina superior derecha, como en un billete, y deja
+  // libre la mitad inferior del panel, donde va el texto.
   function guilloche(canvas) {
-    const ctx = canvas.getContext("2d");
-    const estilos = getComputedStyle(document.documentElement);
-    const acento = estilos.getPropertyValue("--accent").trim() || "#1e7a5c";
-
-    // Familias de epitrocoides, como en la impresión de seguridad de un billete
-    const curvas = [
-      { R: 1.00, r: 0.115, d: 0.36, alfa: 0.55, color: acento },
-      { R: 0.92, r: 0.095, d: 0.30, alfa: 0.35, color: "#f2f5f2" },
-      { R: 0.70, r: 0.075, d: 0.25, alfa: 0.45, color: acento },
-      { R: 0.52, r: 0.130, d: 0.20, alfa: 0.25, color: "#f2f5f2" }
-    ];
-
-    function puntos(c, escala) {
-      const pasos = 2600;
-      const vueltas = Math.PI * 2 * Math.round(1 / c.r);
-      const k = (c.R + c.r) / c.r;
-      const lista = new Array(pasos + 1);
-      for (let i = 0; i <= pasos; i++) {
-        const t = (i / pasos) * vueltas;
-        lista[i] = [
-          ((c.R + c.r) * Math.cos(t) - c.d * Math.cos(k * t)) * escala,
-          ((c.R + c.r) * Math.sin(t) - c.d * Math.sin(k * t)) * escala
-        ];
-      }
-      return lista;
-    }
-
-    let trazos = [];
-    let centro = [0, 0];
-
-    function preparar() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const { width, height } = canvas.getBoundingClientRect();
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // La roseta "se sale" por la esquina superior derecha, como en un billete,
-      // y deja libre la mitad inferior donde va el texto
-      const angosto = window.matchMedia("(max-width: 960px)").matches; // mismo corte que el CSS
-      const escala = angosto ? width * 0.42 : width * 0.38;
-      centro = angosto ? [width * 0.86, height * 0.38] : [width * 0.98, height * 0.06];
-      trazos = curvas.map(c => ({ c, p: puntos(c, escala) }));
-    }
-
-    function dibujar(progreso) {
-      const { width, height } = canvas.getBoundingClientRect();
-      ctx.clearRect(0, 0, width, height);
-      ctx.lineWidth = 0.7;
-      trazos.forEach(({ c, p }) => {
-        const hasta = Math.max(2, Math.floor(p.length * progreso));
-        ctx.globalAlpha = c.alfa;
-        ctx.strokeStyle = c.color;
-        ctx.beginPath();
-        ctx.moveTo(centro[0] + p[0][0], centro[1] + p[0][1]);
-        for (let i = 1; i < hasta; i++) ctx.lineTo(centro[0] + p[i][0], centro[1] + p[i][1]);
-        ctx.stroke();
-      });
-      ctx.globalAlpha = 1;
-    }
-
-    preparar();
-    if (reducirMovimiento) {
-      dibujar(1);
-    } else {
-      // Un único momento orquestado: la roseta se "imprime" en 1,4 s con ease-out fuerte
-      const duracion = 1400;
-      const inicio = performance.now();
-      const easeOut = t => 1 - Math.pow(1 - t, 4);
-      (function cuadro(ahora) {
-        const t = Math.min(1, (ahora - inicio) / duracion);
-        dibujar(easeOut(t));
-        if (t < 1) requestAnimationFrame(cuadro);
-      })(inicio);
-    }
-
-    let pendiente;
-    window.addEventListener("resize", () => {
-      cancelAnimationFrame(pendiente);
-      pendiente = requestAnimationFrame(() => { preparar(); dibujar(1); });
+    window.Guilloche.montar(canvas, {
+      geometria: (ancho, alto) => window.matchMedia("(max-width: 960px)").matches // mismo corte que el CSS
+        ? { x: ancho * 0.86, y: alto * 0.38, escala: ancho * 0.42 }
+        : { x: ancho * 0.98, y: alto * 0.06, escala: ancho * 0.38 }
     });
   }
 
