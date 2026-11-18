@@ -8,899 +8,273 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;650;700&display=swap">
-    <style>
-        /*
-         * Ledger · dashboard
-         * Misma identidad del acceso (impresión de seguridad de billetes), adaptada a una
-         * herramienta que se escanea en lugar de leerse:
-         *  - Franja de tinta arriba (como el panel de marca) y papel frío abajo.
-         *  - Lo único llamativo: la roseta guilloché en la tarjeta de saldo.
-         *  - El resumen y los movimientos se leen como un libro contable: filas separadas
-         *    por líneas finas, cifras tabulares, nada de tarjetas idénticas repetidas.
-         * Movimiento (Emil Kowalski): ease-out fuerte, scale(.97) al presionar, transiciones
-         * interrumpibles en avisos y pestañas, hover solo con puntero fino.
-         */
-        :root {
-            --ink: #10233a;
-            --paper: #f3f5f7;
-            --surface: #ffffff;
-            --surface-2: #f7f9fa;
-            --line: #d6dce3;
-            --line-soft: #e6eaef;
-            --text: #13202e;
-            --muted: #5b6b7c;
-            --accent: #1e7a5c;
-            --accent-soft: #e3f1ec;
-            --primario: #10233a;
-            --primario-press: #0a1a2c;
-            --on-primario: #f2f5f2;
-            --on-ink: #f2f5f2;
-            --on-ink-muted: #a9b8c9;
-            --ok: #1e7a5c;
-            --ok-soft: #e3f1ec;
-            --warn: #8a5300;
-            --warn-soft: #fbf0df;
-            --danger: #b3261e;
-            --danger-soft: #fbeceb;
-            --font: "Hanken Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
-            --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
-            --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
-            --radius: 12px;
-        }
-        @media (prefers-color-scheme: dark) {
-            :root:not([data-theme="light"]) {
-                --ink: #0b1a2c; --paper: #0e1621; --surface: #142030; --surface-2: #17263a;
-                --line: #263447; --line-soft: #1f2d3f; --text: #e6ecf2; --muted: #93a4b7;
-                --accent: #4fc39a; --accent-soft: #163128;
-                --primario: #4fc39a; --primario-press: #3faa84; --on-primario: #062018;
-                --ok: #4fc39a; --ok-soft: #163128; --warn: #f2b25c; --warn-soft: #33261a;
-                --danger: #ff8a80; --danger-soft: #3a1d1c;
-                color-scheme: dark;
-            }
-        }
-        :root[data-theme="dark"] {
-            --ink: #0b1a2c; --paper: #0e1621; --surface: #142030; --surface-2: #17263a;
-            --line: #263447; --line-soft: #1f2d3f; --text: #e6ecf2; --muted: #93a4b7;
-            --accent: #4fc39a; --accent-soft: #163128;
-            --primario: #4fc39a; --primario-press: #3faa84; --on-primario: #062018;
-            --ok: #4fc39a; --ok-soft: #163128; --warn: #f2b25c; --warn-soft: #33261a;
-            --danger: #ff8a80; --danger-soft: #3a1d1c;
-            color-scheme: dark;
-        }
-        * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: var(--font);
-            background: var(--paper);
-            color: var(--text);
-            font-size: 15px;
-            line-height: 1.45;
-            -webkit-font-smoothing: antialiased;
-            -webkit-tap-highlight-color: transparent;
-        }
-        button, input, select { font: inherit; color: inherit; }
-        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
-        /* ---------- Franja de tinta (encabezado) ---------- */
-        header {
-            position: sticky;
-            top: env(safe-area-inset-top, 0px);
-            z-index: 5;
-            background: var(--ink);
-            color: var(--on-ink);
-            padding: 14px max(24px, env(safe-area-inset-right, 0px)) 14px max(24px, env(safe-area-inset-left, 0px));
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px 20px;
-            flex-wrap: wrap;
-        }
-        .wordmark { margin: 0; display: flex; align-items: baseline; gap: 10px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
-        .wordmark span { color: var(--on-ink-muted); font-size: 14px; font-weight: 500; letter-spacing: 0; }
-        .sesion { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .conexion {
-            display: inline-flex; align-items: center; gap: 8px;
-            font-size: 13px; font-weight: 600; color: var(--on-ink-muted);
-        }
-        .conexion .dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #ff8a80;
-            transition: background-color 200ms ease;
-        }
-        .conexion.on { color: var(--on-ink); }
-        .conexion.on .dot { background: #4fc39a; box-shadow: 0 0 0 3px rgba(79, 195, 154, 0.22); }
-        .titular { display: grid; line-height: 1.2; text-align: right; }
-        .titular b { font-weight: 600; }
-        .titular small { color: var(--on-ink-muted); font-size: 12.5px; }
-        .salir {
-            border: 1px solid rgba(242, 245, 242, 0.25);
-            background: transparent;
-            color: var(--on-ink);
-            border-radius: 10px;
-            padding: 8px 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 160ms var(--ease-out), border-color 150ms ease, background-color 150ms ease;
-        }
-        .salir:active { transform: scale(0.97); }
-        @media (hover: hover) and (pointer: fine) {
-            .salir:hover { border-color: rgba(242, 245, 242, 0.6); background: rgba(242, 245, 242, 0.06); }
-        }
-
-        /* ---------- Layout ---------- */
-        main {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 24px max(16px, env(safe-area-inset-right, 0px)) 48px max(16px, env(safe-area-inset-left, 0px));
-            display: grid;
-            grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
-            gap: 24px;
-            align-items: start;
-        }
-        .col { display: grid; gap: 24px; min-width: 0; }
-        @media (max-width: 900px) { main { grid-template-columns: minmax(0, 1fr); } }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            padding: 20px;
-            min-width: 0;
-        }
-        .card h2 {
-            margin: 0 0 14px;
-            font-size: 17px;
-            font-weight: 650;
-            letter-spacing: -0.01em;
-            display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap;
-        }
-        .card h2 small { color: var(--muted); font-weight: 400; font-size: 13px; letter-spacing: 0; }
-
-        /* ---------- Billetera ---------- */
-        .saldo {
-            position: relative;
-            overflow: hidden;
-            isolation: isolate;
-            margin: 0 0 18px;
-            padding: 20px 20px 18px;
-            border-radius: var(--radius);
-            background: var(--ink);
-            color: var(--on-ink);
-            min-height: 150px;
-            display: grid;
-            align-content: end;
-            gap: 2px;
-        }
-        .saldo canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
-        .saldo span { font-size: 13px; color: var(--on-ink-muted); }
-        .saldo strong { font-size: 36px; line-height: 1.1; font-weight: 650; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
-        .saldo small { color: var(--on-ink-muted); font-size: 12.5px; }
-
-        /* Pestañas: el indicador se desliza (transición interrumpible, no keyframes) */
-        .tabs {
-            position: relative;
-            display: grid; grid-template-columns: 1fr 1fr;
-            padding: 4px; margin-bottom: 16px;
-            background: var(--surface-2);
-            border: 1px solid var(--line-soft);
-            border-radius: 10px;
-        }
-        .tabs::before {
-            content: "";
-            position: absolute;
-            top: 4px; bottom: 4px; left: 4px;
-            width: calc(50% - 4px);
-            border-radius: 7px;
-            background: var(--surface);
-            box-shadow: 0 1px 2px rgba(16, 35, 58, 0.12);
-            transition: transform 220ms var(--ease-out);
-        }
-        .tabs[data-activa="recargar"]::before { transform: translateX(100%); }
-        .tabs button {
-            position: relative;
-            border: 0; background: transparent; padding: 8px; border-radius: 7px;
-            cursor: pointer; font-weight: 600; color: var(--muted);
-            transition: color 150ms ease;
-        }
-        .tabs button[aria-selected="true"] { color: var(--text); }
-
-        .campo { display: grid; gap: 6px; margin-bottom: 14px; }
-        .campo > span { font-size: 14px; font-weight: 600; }
-        input, select {
-            width: 100%;
-            height: 46px;
-            padding: 0 12px;
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            background: var(--surface);
-            outline: none;
-            font-size: 16px;
-            transition: border-color 150ms ease, box-shadow 150ms ease;
-        }
-        input::placeholder { color: var(--muted); opacity: 0.7; }
-        input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-        .fila { display: grid; grid-template-columns: minmax(0, 1fr) 104px; gap: 10px; }
-
-        .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 14px; }
-        .chips button {
-            border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
-            padding: 5px 11px; cursor: pointer; font-size: 13px; font-weight: 600;
-            font-variant-numeric: tabular-nums;
-            transition: transform 120ms var(--ease-out), border-color 150ms ease, color 150ms ease;
-        }
-        .chips button:active { transform: scale(0.96); }
-        @media (hover: hover) and (pointer: fine) {
-            .chips button:hover { border-color: var(--accent); color: var(--accent); }
-        }
-        .aviso {
-            margin: -2px 0 14px; padding: 10px 12px; border-radius: 10px;
-            background: var(--warn-soft); color: var(--warn); font-size: 13px;
-        }
-
-        .btn {
-            width: 100%; height: 48px; border: 0; border-radius: 10px;
-            font-weight: 650; cursor: pointer;
-            background: var(--primario); color: var(--on-primario);
-            transition: transform 160ms var(--ease-out), background-color 150ms ease, opacity 150ms ease;
-            -webkit-user-select: none; user-select: none;
-        }
-        .btn:active { transform: scale(0.97); background: var(--primario-press); }
-        .btn.verde { background: var(--accent); color: var(--on-primario); }
-        .btn:disabled { opacity: 0.6; cursor: progress; }
-        .btn.secundario {
-            height: auto; padding: 12px 14px; text-align: left; font-weight: 600;
-            background: var(--surface-2); color: var(--text); border: 1px solid var(--line-soft);
-        }
-        .btn.secundario:active { background: var(--surface-2); }
-        @media (hover: hover) and (pointer: fine) {
-            .btn.secundario:hover { border-color: var(--line); }
-        }
-
-        details.card summary { cursor: pointer; font-weight: 650; list-style-position: inside; }
-        .demo-nota { display: block; color: var(--muted); margin-top: 6px; font-size: 13px; }
-        details.card .demos { display: grid; gap: 8px; margin-top: 12px; }
-        details.card .demos small { display: block; color: var(--muted); font-weight: 400; margin-top: 2px; font-size: 13px; }
-
-        /* ---------- Resumen: una franja de libro contable ---------- */
-        .resumen {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            background: var(--surface);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            overflow: hidden;
-        }
-        .kpi { padding: 14px 18px; border-left: 1px solid var(--line-soft); }
-        .kpi:first-child { border-left: 0; }
-        .kpi span { display: block; color: var(--muted); font-size: 13px; }
-        .kpi strong { font-size: 28px; font-weight: 650; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-        .kpi.ok strong { color: var(--ok); }
-        .kpi.warn strong { color: var(--warn); }
-        .kpi.danger strong { color: var(--danger); }
-        @media (max-width: 560px) {
-            .resumen { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .kpi:nth-child(3) { border-left: 0; }
-            .kpi:nth-child(-n+2) { border-bottom: 1px solid var(--line-soft); }
-        }
-
-        /* ---------- Cuentas ---------- */
-        .cuentas { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
-        .cuenta {
-            display: flex; align-items: center; gap: 10px; text-align: left;
-            padding: 10px 12px; border-radius: 10px; cursor: pointer;
-            border: 1px solid var(--line-soft); background: var(--surface-2);
-            transition: transform 160ms var(--ease-out), border-color 150ms ease;
-        }
-        .cuenta:active { transform: scale(0.98); }
-        @media (hover: hover) and (pointer: fine) { .cuenta:hover { border-color: var(--accent); } }
-        .cuenta.activa { border-color: var(--accent); background: var(--accent-soft); }
-        .avatar {
-            flex: none; width: 34px; height: 34px; border-radius: 50%;
-            display: grid; place-items: center; font-weight: 700; font-size: 13px;
-            background: var(--ink); color: var(--on-ink);
-        }
-        .cuenta.activa .avatar { background: var(--accent); color: var(--on-primario); }
-        .cuenta div { min-width: 0; }
-        .cuenta b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-        .cuenta small { color: var(--muted); font-variant-numeric: tabular-nums; }
-        .vacio { color: var(--muted); text-align: center; padding: 20px 8px; margin: 0; }
-
-        /* ---------- Movimientos: filas de un libro ---------- */
-        .toolbar { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin-bottom: 8px; }
-        .filtros { display: flex; flex-wrap: wrap; gap: 6px; }
-        .filtros button {
-            border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
-            padding: 6px 12px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted);
-            transition: transform 120ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease;
-        }
-        .filtros button:active { transform: scale(0.96); }
-        .filtros button[aria-pressed="true"] { background: var(--ink); color: var(--on-ink); border-color: var(--ink); }
-        .buscar { flex: 1 1 200px; }
-        .buscar input { height: 38px; font-size: 14px; }
-        .solo-mios { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
-        .solo-mios input { width: 16px; height: 16px; accent-color: var(--accent); }
-
-        ul.movs { list-style: none; margin: 0; padding: 0; }
-        .mov {
-            display: grid;
-            grid-template-columns: 38px minmax(0, 1fr) auto;
-            gap: 12px;
-            align-items: center;
-            padding: 12px 10px;
-            border-bottom: 1px solid var(--line-soft);
-            border-radius: 10px;
-        }
-        .mov:last-child { border-bottom: 0; }
-        .mov .icono {
-            width: 38px; height: 38px; border-radius: 50%;
-            display: grid; place-items: center; font-size: 17px; font-weight: 700;
-            background: var(--surface-2); color: var(--text);
-            border: 1px solid var(--line-soft);
-        }
-        .mov.recarga .icono { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
-        .mov.denegada .icono { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
-        .mov .info { min-width: 0; }
-        .mov .info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-        .mov .info small { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
-        .mov .info .motivo { display: block; margin-top: 2px; font-size: 13px; font-weight: 600; }
-        .mov.denegada .motivo { color: var(--warn); }
-        .mov .lado { text-align: right; display: grid; gap: 4px; justify-items: end; }
-        .monto { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .monto.mas { color: var(--ok); }
-        .monto.menos { color: var(--text); }
-        .mov.denegada .monto { color: var(--muted); text-decoration: line-through; }
-        .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 650; }
-        .badge.COMPLETED { background: var(--ok-soft); color: var(--ok); }
-        .badge.REJECTED { background: var(--warn-soft); color: var(--warn); }
-        .badge.SUSPICIOUS { background: var(--danger); color: #fff; }
-
-        /* Transacción sospechosa resaltada en rojo */
-        .mov.sospechosa { background: var(--danger-soft); border-bottom-color: transparent; }
-        .mov.sospechosa .icono { background: var(--danger); color: #fff; border-color: transparent; }
-        .mov.sospechosa .info b, .mov.sospechosa .motivo { color: var(--danger); }
-
-        /* Fila recién llegada: un destello breve que se desvanece (no se mueve nada) */
-        @media (prefers-reduced-motion: no-preference) {
-            .mov.nuevo { animation: resaltar 900ms var(--ease-out); }
-        }
-        @keyframes resaltar { from { background-color: var(--accent-soft); } }
-
-        /* ---------- Avisos emergentes (estilo Sonner: transición, no keyframes) ---------- */
-        #toasts {
-            position: fixed;
-            right: max(16px, env(safe-area-inset-right, 0px));
-            bottom: max(16px, env(safe-area-inset-bottom, 0px));
-            display: grid; gap: 8px; z-index: 20;
-            max-width: min(360px, calc(100vw - 32px));
-        }
-        .toast {
-            padding: 12px 14px; border-radius: 10px;
-            background: var(--ink); color: var(--on-ink);
-            box-shadow: 0 10px 30px rgba(10, 26, 44, 0.22);
-            font-size: 14px;
-            opacity: 1;
-            transform: none;
-            transition: opacity 400ms ease, transform 400ms ease;
-            @starting-style { opacity: 0; transform: translateY(10px); }
-        }
-        .toast.saliendo { opacity: 0; transform: translateY(6px); transition-duration: 200ms; }
-        .toast.ok { background: var(--accent); color: var(--on-primario); }
-        .toast.warn { background: var(--warn); color: #fff; }
-        .toast.danger { background: var(--danger); color: #fff; }
-        @media (prefers-reduced-motion: reduce) {
-            .toast, .tabs::before, .btn, .cuenta { transition-duration: 0ms; }
-        }
-    </style>
+    <!-- Aplica el tema elegido (claro/oscuro) antes de pintar, para que no parpadee -->
+    <script>try { const t = localStorage.getItem("ledger.tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+    <link rel="stylesheet" href="app.css">
 </head>
 <body>
-<header>
-    <h1 class="wordmark">Ledger <span>banca P2P</span></h1>
-    <div class="sesion">
-        <span id="conexion" class="conexion" role="status"><span class="dot"></span><span id="conexion-texto">Desconectado</span></span>
-        <span class="titular"><b id="titular-nombre"></b><small id="titular-usuario"></small></span>
-        <button type="button" id="salir" class="salir">Cerrar sesión</button>
+<div id="app" class="app">
+    <!-- ======================= Menú lateral ======================= -->
+    <aside id="lateral" class="lateral" aria-label="Menú principal">
+        <div class="accesos" aria-label="Accesos rápidos">
+            <button type="button" class="acceso-rapido principal" data-ir="mover" data-pestana="enviar" title="Enviar dinero" aria-label="Enviar dinero"><svg class="icono-svg" data-icono="enviado"></svg></button>
+            <button type="button" class="acceso-rapido" data-ir="mover" data-pestana="recargar" title="Recargar saldo" aria-label="Recargar saldo"><svg class="icono-svg" data-icono="recarga"></svg></button>
+            <button type="button" class="acceso-rapido" data-ir="movimientos" title="Ver movimientos" aria-label="Ver movimientos"><svg class="icono-svg" data-icono="movimientos"></svg></button>
+            <button type="button" class="acceso-rapido" data-ir="alertas" title="Ver alertas" aria-label="Ver alertas"><svg class="icono-svg" data-icono="alertas"></svg></button>
+            <button type="button" class="acceso-rapido" data-ir="simulador" title="Simular una transacción" aria-label="Simular una transacción"><svg class="icono-svg" data-icono="simulador"></svg></button>
+            <button type="button" class="acceso-rapido" data-accion="tema" title="Cambiar a modo claro u oscuro" aria-label="Cambiar a modo claro u oscuro"><svg class="icono-svg" data-icono="tema"></svg></button>
+        </div>
+
+        <div class="perfil">
+            <b id="perfil-usuario">@usuario</b>
+            <span id="perfil-nombre">Cliente</span>
+        </div>
+
+        <nav class="menu" aria-label="Secciones">
+            <a href="#inicio" data-vista="inicio"><svg class="icono-svg" data-icono="inicio"></svg><span class="etiqueta">Inicio</span></a>
+            <a href="#mover" data-vista="mover"><svg class="icono-svg" data-icono="mover"></svg><span class="etiqueta">Mover dinero</span></a>
+            <a href="#movimientos" data-vista="movimientos"><svg class="icono-svg" data-icono="movimientos"></svg><span class="etiqueta">Movimientos</span></a>
+            <a href="#alertas" data-vista="alertas"><svg class="icono-svg" data-icono="alertas"></svg><span class="etiqueta">Alertas</span><span id="contador-alertas" class="contador" hidden>0</span></a>
+            <a href="#simulador" data-vista="simulador"><svg class="icono-svg" data-icono="simulador"></svg><span class="etiqueta">Simulador</span></a>
+            <a href="#analisis" data-vista="analisis"><svg class="icono-svg" data-icono="analisis"></svg><span class="etiqueta">Análisis</span></a>
+        </nav>
+
+        <div class="lateral-pie">
+            <button type="button" data-accion="tema"><svg class="icono-svg" data-icono="tema"></svg><span class="etiqueta" data-texto-tema>Modo oscuro</span></button>
+            <button type="button" id="salir"><svg class="icono-svg" data-icono="salir"></svg><span class="etiqueta">Cerrar sesión</span></button>
+        </div>
+    </aside>
+    <div id="velo" class="velo" hidden></div>
+
+    <!-- ======================= Contenido ======================= -->
+    <div class="contenido">
+        <header class="barra">
+            <button type="button" id="boton-menu" class="boton-icono" aria-label="Mostrar u ocultar el menú" aria-controls="lateral" aria-expanded="true"><svg class="icono-svg" data-icono="menu"></svg></button>
+            <h1 class="wordmark">Ledger <span>banca P2P</span></h1>
+            <div class="barra-derecha">
+                <span id="conexion" class="conexion" role="status"><span class="dot"></span><span id="conexion-texto">Desconectado</span></span>
+                <button type="button" class="boton-icono" data-accion="tema" aria-label="Cambiar a modo claro u oscuro" title="Cambiar a modo claro u oscuro"><svg class="icono-svg" data-icono="tema"></svg></button>
+            </div>
+        </header>
+
+        <main class="vistas" id="principal" tabindex="-1">
+            <!-- ======================= Inicio ======================= -->
+            <section class="vista" data-vista="inicio" aria-labelledby="t-inicio">
+                <h2 class="vista-titulo" id="t-inicio">Hola, <span id="saludo-nombre">cliente</span></h2>
+                <p class="vista-sub">Este es el estado de tu cuenta y un resumen de tu actividad.</p>
+                <div class="rejilla-inicio">
+                    <section id="saldo" class="panel saldo" aria-label="Estado de cuenta">
+                        <canvas aria-hidden="true"></canvas>
+                        <span class="rotulo">Estado de cuenta · saldo disponible</span>
+                        <strong id="saldo-actual">US$ 0,00</strong>
+                        <small id="saldo-nota">Tu cuenta está en $0: recárgala para empezar a enviar</small>
+                        <div class="saldo-acciones">
+                            <a href="#mover" data-pestana="enviar"><svg class="icono-svg" data-icono="enviado"></svg>Enviar</a>
+                            <a href="#mover" data-pestana="recargar"><svg class="icono-svg" data-icono="recarga"></svg>Recargar</a>
+                        </div>
+                    </section>
+
+                    <section id="actividad" class="panel" aria-labelledby="t-actividad">
+                        <div class="panel-cabecera"><h3 id="t-actividad">Tu actividad</h3></div>
+                        <p id="actividad-texto" class="actividad-texto">Aún no has hecho transacciones.</p>
+                        <div class="dona-envoltura">
+                            <svg id="dona-personal" class="dona" viewBox="0 0 150 150" role="img" aria-label="Distribución de tus movimientos por estado"></svg>
+                            <ul id="leyenda-personal" class="leyenda"></ul>
+                        </div>
+                    </section>
+
+                    <section id="t-enviado" class="panel tarjeta" aria-label="Enviado">
+                        <div class="tarjeta-cabecera"><span class="tarjeta-icono enviado"><svg class="icono-svg" data-icono="enviado"></svg></span>Enviado</div>
+                        <strong id="v-enviado">US$ 0,00</strong>
+                        <small id="d-enviado">0 envíos</small>
+                        <div class="porcentaje"><div class="cuota"><span id="c-enviado"></span></div><b id="p-enviado">0 %</b></div>
+                        <small>de tus movimientos</small>
+                    </section>
+                    <section id="t-recibido" class="panel tarjeta" aria-label="Recibido">
+                        <div class="tarjeta-cabecera"><span class="tarjeta-icono recibido"><svg class="icono-svg" data-icono="recibido"></svg></span>Recibido</div>
+                        <strong id="v-recibido">US$ 0,00</strong>
+                        <small id="d-recibido">0 recibidos</small>
+                        <div class="porcentaje"><div class="cuota"><span id="c-recibido"></span></div><b id="p-recibido">0 %</b></div>
+                        <small>de tus movimientos</small>
+                    </section>
+                    <section id="t-recargas" class="panel tarjeta" aria-label="Recargas">
+                        <div class="tarjeta-cabecera"><span class="tarjeta-icono recarga"><svg class="icono-svg" data-icono="recarga"></svg></span>Recargas</div>
+                        <strong id="v-recargas">US$ 0,00</strong>
+                        <small id="d-recargas">0 recargas</small>
+                        <div class="porcentaje"><div class="cuota"><span id="c-recargas"></span></div><b id="p-recargas">0 %</b></div>
+                        <small>de tus movimientos</small>
+                    </section>
+                    <section id="t-aprobacion" class="panel tarjeta" aria-label="Aprobación">
+                        <div class="tarjeta-cabecera"><span class="tarjeta-icono aprobado"><svg class="icono-svg" data-icono="check"></svg></span>Aprobación</div>
+                        <strong id="v-aprobacion">—</strong>
+                        <small id="d-aprobacion">Sin movimientos todavía</small>
+                        <div class="porcentaje"><div class="cuota"><span id="c-aprobacion"></span></div><b id="p-aprobacion">0 %</b></div>
+                        <small>operaciones aprobadas</small>
+                    </section>
+
+                    <section id="ultimos" class="panel" aria-labelledby="t-ultimos">
+                        <div class="panel-cabecera"><h3 id="t-ultimos">Últimos movimientos</h3><a href="#movimientos">Ver el registro completo</a></div>
+                        <ul id="lista-ultimos" class="movs"></ul>
+                        <p id="ultimos-vacio" class="vacio">Aún no has hecho transacciones. Recarga tu cuenta o envía dinero para verlas aquí.</p>
+                    </section>
+                </div>
+            </section>
+
+            <!-- ======================= Mover dinero ======================= -->
+            <section class="vista" data-vista="mover" aria-labelledby="t-mover" hidden>
+                <h2 class="vista-titulo" id="t-mover">Mover dinero</h2>
+                <p class="vista-sub">Envía dinero a otro usuario o recarga tu cuenta. El resultado aparece en tu registro en segundos.</p>
+                <div class="rejilla-mover">
+                    <section class="panel" aria-label="Operar">
+                        <div class="saldo-mini"><span>Saldo disponible</span><b id="saldo-mini">US$ 0,00</b></div>
+                        <div class="tabs" role="tablist" data-activa="enviar">
+                            <button type="button" role="tab" id="tab-enviar" aria-selected="true" aria-controls="form-enviar">Enviar</button>
+                            <button type="button" role="tab" id="tab-recargar" aria-selected="false" aria-controls="form-recargar">Recargar</button>
+                        </div>
+                        <form id="form-enviar" role="tabpanel" aria-labelledby="tab-enviar">
+                            <label class="campo"><span>Para</span>
+                                <input name="to_user" list="lista-usuarios" placeholder="Usuario que recibe, por ejemplo B" autocomplete="off" required>
+                            </label>
+                            <div class="fila">
+                                <label class="campo"><span>Monto</span><input name="amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></label>
+                                <label class="campo"><span>Divisa</span><select name="currency"><option>USD</option><option>EUR</option><option>COP</option></select></label>
+                            </div>
+                            <p id="aviso-saldo" class="aviso" hidden><svg class="icono-svg" data-icono="alertas"></svg><span>El monto supera tu saldo: el sistema denegará este envío por fondos insuficientes.</span></p>
+                            <button class="btn" type="submit"><svg class="icono-svg" data-icono="enviado"></svg>Enviar dinero</button>
+                        </form>
+                        <form id="form-recargar" role="tabpanel" aria-labelledby="tab-recargar" hidden>
+                            <div class="fila">
+                                <label class="campo"><span>Monto a recargar</span><input name="amount" type="number" min="0.01" step="0.01" placeholder="0,00" required></label>
+                                <label class="campo"><span>Divisa</span><select name="currency"><option>USD</option><option>EUR</option><option>COP</option></select></label>
+                            </div>
+                            <div class="chips" aria-label="Montos rápidos">
+                                <button type="button" data-monto="50">+50</button>
+                                <button type="button" data-monto="100">+100</button>
+                                <button type="button" data-monto="500">+500</button>
+                                <button type="button" data-monto="1000">+1.000</button>
+                                <button type="button" data-monto="10000">+10.000</button>
+                            </div>
+                            <button class="btn verde" type="submit"><svg class="icono-svg" data-icono="recarga"></svg>Recargar saldo</button>
+                        </form>
+                    </section>
+                    <section class="panel" aria-labelledby="t-destinos">
+                        <div class="panel-cabecera"><h3 id="t-destinos">Cuentas</h3><small>Haz clic en una cuenta para enviarle dinero</small></div>
+                        <ol id="cuentas" class="barras"></ol>
+                        <p id="cuentas-vacio" class="vacio">Aún no hay cuentas. Haz una recarga para crear la primera.</p>
+                        <p id="cuentas-mas" class="nota" hidden></p>
+                    </section>
+                </div>
+            </section>
+
+            <!-- ======================= Movimientos ======================= -->
+            <section class="vista" data-vista="movimientos" aria-labelledby="t-movs" hidden>
+                <h2 class="vista-titulo" id="t-movs">Movimientos</h2>
+                <p class="vista-sub">El registro de las transacciones que generas y recibes. Las denegadas y las sospechosas llevan un signo de alerta.</p>
+                <section class="panel">
+                    <div class="panel-cabecera"><h3>Registro</h3><small id="movs-contador"></small></div>
+                    <div class="toolbar">
+                        <div class="filtros" role="group" aria-label="Filtrar movimientos">
+                            <button type="button" data-filtro="todos" aria-pressed="true">Todos</button>
+                            <button type="button" data-filtro="enviados" aria-pressed="false">Enviados</button>
+                            <button type="button" data-filtro="recibidos" aria-pressed="false">Recibidos</button>
+                            <button type="button" data-filtro="recargas" aria-pressed="false">Recargas</button>
+                            <button type="button" data-filtro="denegados" aria-pressed="false">Denegados</button>
+                            <button type="button" data-filtro="sospechosos" aria-pressed="false">Sospechosos</button>
+                        </div>
+                        <label class="buscar"><span class="sr-only">Buscar</span><input id="buscar" type="search" placeholder="Buscar por usuario o tx_id"></label>
+                        <label class="interruptor"><input id="solo-mios" type="checkbox" checked> Solo los míos</label>
+                    </div>
+                    <div class="lista-scroll">
+                        <ul id="movs" class="movs"></ul>
+                        <p id="movs-vacio" class="vacio">Esperando movimientos…</p>
+                    </div>
+                </section>
+            </section>
+
+            <!-- ======================= Alertas ======================= -->
+            <section class="vista" data-vista="alertas" aria-labelledby="t-alertas" hidden>
+                <h2 class="vista-titulo" id="t-alertas">Alertas</h2>
+                <p class="vista-sub">Transacciones que el sistema denegó o que el detector de fraude marcó como sospechosas, con la razón de cada una.</p>
+                <div class="resumen-alertas">
+                    <section class="panel"><span class="signo peligro"><svg class="icono-svg" data-icono="alertas"></svg></span><div><strong id="n-sospechosas">0</strong><small>Sospechosas</small></div></section>
+                    <section class="panel"><span class="signo advertencia"><svg class="icono-svg" data-icono="alertas"></svg></span><div><strong id="n-denegadas">0</strong><small>Denegadas</small></div></section>
+                </div>
+                <section class="panel">
+                    <div class="panel-cabecera">
+                        <h3>Historial de alertas</h3>
+                        <label class="interruptor"><input id="alertas-mias" type="checkbox"> Solo las mías</label>
+                    </div>
+                    <div class="lista-scroll"><div id="lista-alertas"></div></div>
+                    <p id="alertas-vacio" class="vacio">No hay alertas. Prueba el simulador para ver cómo se ven.</p>
+                </section>
+            </section>
+
+            <!-- ======================= Simulador ======================= -->
+            <section class="vista" data-vista="simulador" aria-labelledby="t-sim" hidden>
+                <h2 class="vista-titulo" id="t-sim">Simulador</h2>
+                <p class="vista-sub">Envía transacciones de prueba al sistema real y mira cuándo las deniega o las advierte. Usan cuentas de prueba (sim_…), así que tu saldo no cambia.</p>
+                <div id="escenarios" class="escenarios"></div>
+                <div class="rejilla-sim">
+                    <section class="panel" aria-labelledby="t-sim-libre">
+                        <div class="panel-cabecera"><h3 id="t-sim-libre">Simulación personalizada</h3></div>
+                        <form id="form-sim">
+                            <div class="fila-3">
+                                <label class="campo"><span>Saldo inicial</span><input name="saldo" type="number" min="0" max="1000000" step="0.01" value="1000" required></label>
+                                <label class="campo"><span>Monto por envío</span><input name="monto" type="number" min="0.01" step="0.01" value="200" required></label>
+                                <label class="campo"><span>Envíos</span><input name="envios" type="number" min="1" max="10" step="1" value="1" required></label>
+                            </div>
+                            <label class="campo"><span>Divisa <span class="ayuda">las cuentas operan en USD</span></span>
+                                <select name="divisa"><option>USD</option><option>EUR</option><option>COP</option></select>
+                            </label>
+                            <p id="prediccion" class="prediccion"></p>
+                            <button class="btn" type="submit"><svg class="icono-svg" data-icono="simulador"></svg>Simular</button>
+                        </form>
+                    </section>
+                    <section class="panel" aria-labelledby="t-bitacora">
+                        <div class="panel-cabecera"><h3 id="t-bitacora">Resultados</h3><small>El estado se actualiza en vivo desde el ledger</small></div>
+                        <div id="bitacora"></div>
+                        <p id="bitacora-vacia" class="vacio">Elige un escenario para empezar.</p>
+                    </section>
+                </div>
+            </section>
+
+            <!-- ======================= Análisis ======================= -->
+            <section class="vista" data-vista="analisis" aria-labelledby="t-analisis" hidden>
+                <h2 class="vista-titulo" id="t-analisis">Análisis</h2>
+                <p class="vista-sub">Indicadores de todo el banco, calculados en vivo a partir del ledger.</p>
+                <div class="rejilla-analisis">
+                    <div class="kpis-globales">
+                        <section class="panel tarjeta"><div class="tarjeta-cabecera">Movimientos</div><strong id="g-total">0</strong><small>en el ledger</small></section>
+                        <section class="panel tarjeta"><div class="tarjeta-cabecera"><i class="muestra" style="background: var(--serie-ok)"></i>Completados</div><strong id="g-ok">0</strong><div class="porcentaje"><div class="cuota"><span id="gc-ok" style="background: var(--serie-ok)"></span></div><b id="gp-ok">0 %</b></div></section>
+                        <section class="panel tarjeta"><div class="tarjeta-cabecera"><i class="muestra" style="background: var(--serie-warn)"></i>Denegados</div><strong id="g-den">0</strong><div class="porcentaje"><div class="cuota"><span id="gc-den" style="background: var(--serie-warn)"></span></div><b id="gp-den">0 %</b></div></section>
+                        <section class="panel tarjeta"><div class="tarjeta-cabecera"><i class="muestra" style="background: var(--serie-danger)"></i>Sospechosos</div><strong id="g-sos">0</strong><div class="porcentaje"><div class="cuota"><span id="gc-sos" style="background: var(--serie-danger)"></span></div><b id="gp-sos">0 %</b></div></section>
+                    </div>
+                    <section id="panel-volumen" class="panel" aria-labelledby="t-volumen">
+                        <div class="panel-cabecera"><h3 id="t-volumen">Dinero movido</h3><small id="volumen-nota"></small></div>
+                        <div id="grafico-volumen" class="grafico"></div>
+                    </section>
+                    <section id="panel-dona-global" class="panel" aria-labelledby="t-dona-global">
+                        <div class="panel-cabecera"><h3 id="t-dona-global">Estado de los movimientos</h3></div>
+                        <div class="dona-envoltura" style="grid-template-columns: 1fr; justify-items: center;">
+                            <svg id="dona-global" class="dona" viewBox="0 0 150 150" role="img" aria-label="Distribución por estado de todo el banco"></svg>
+                            <ul id="leyenda-global" class="leyenda"></ul>
+                        </div>
+                    </section>
+                    <section id="panel-saldos" class="panel" aria-labelledby="t-saldos">
+                        <div class="panel-cabecera"><h3 id="t-saldos">Saldo por cuenta</h3><small>Las 8 cuentas con más saldo</small></div>
+                        <ol id="saldos-globales" class="barras"></ol>
+                    </section>
+                </div>
+            </section>
+        </main>
     </div>
-</header>
-
-<main>
-    <!-- ================= Columna izquierda: operar ================= -->
-    <div class="col">
-        <section class="card" aria-labelledby="t-billetera">
-            <h2 id="t-billetera">Mi billetera</h2>
-
-            <div class="saldo">
-                <canvas aria-hidden="true"></canvas>
-                <span>Saldo disponible</span>
-                <strong id="saldo-actual">$0,00</strong>
-                <small id="saldo-nota">Cuenta nueva: recarga para empezar a enviar</small>
-            </div>
-
-            <div class="tabs" role="tablist" data-activa="enviar">
-                <button type="button" role="tab" id="tab-enviar" aria-selected="true" aria-controls="form-enviar">Enviar</button>
-                <button type="button" role="tab" id="tab-recargar" aria-selected="false" aria-controls="form-recargar">Recargar</button>
-            </div>
-
-            <form id="form-enviar" role="tabpanel" aria-labelledby="tab-enviar">
-                <label class="campo">
-                    <span>Para</span>
-                    <input name="to_user" list="lista-usuarios" placeholder="Ej. B" autocomplete="off" required>
-                </label>
-                <div class="fila">
-                    <label class="campo">
-                        <span>Monto</span>
-                        <input name="amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
-                    </label>
-                    <label class="campo">
-                        <span>Divisa</span>
-                        <select name="currency"><option>USD</option><option>EUR</option><option>COP</option></select>
-                    </label>
-                </div>
-                <p id="aviso-saldo" class="aviso" hidden>El monto supera tu saldo: el sistema denegará este envío por fondos insuficientes.</p>
-                <button class="btn" type="submit">Enviar dinero</button>
-            </form>
-
-            <form id="form-recargar" role="tabpanel" aria-labelledby="tab-recargar" hidden>
-                <div class="fila">
-                    <label class="campo">
-                        <span>Monto a recargar</span>
-                        <input name="amount" type="number" min="0.01" step="0.01" placeholder="0,00" required>
-                    </label>
-                    <label class="campo">
-                        <span>Divisa</span>
-                        <select name="currency"><option>USD</option><option>EUR</option><option>COP</option></select>
-                    </label>
-                </div>
-                <div class="chips" aria-label="Montos rápidos">
-                    <button type="button" data-monto="50">+50</button>
-                    <button type="button" data-monto="100">+100</button>
-                    <button type="button" data-monto="500">+500</button>
-                    <button type="button" data-monto="1000">+1.000</button>
-                    <button type="button" data-monto="10000">+10.000</button>
-                </div>
-                <button class="btn verde" type="submit">Recargar saldo</button>
-            </form>
-        </section>
-
-        <details class="card">
-            <summary>Escenarios de demostración</summary>
-            <small class="demo-nota">Simulan operaciones de otros clientes (C, D y Z); no usan tu cuenta.</small>
-            <div class="demos">
-                <button type="button" class="btn secundario" id="demo-fraude">
-                    Transferencia sospechosa ($20.000)
-                    <small>Recarga a C con $25.000 y envía $20.000 a D. Se marcará en rojo.</small>
-                </button>
-                <button type="button" class="btn secundario" id="demo-denegada">
-                    Envío sin saldo
-                    <small>Z, una cuenta sin saldo, intenta enviar $100 a A. Saldrá denegado.</small>
-                </button>
-            </div>
-        </details>
-    </div>
-
-    <!-- ================= Columna derecha: consultar ================= -->
-    <div class="col">
-        <section class="resumen" aria-label="Resumen">
-            <div class="kpi"><span>Movimientos</span><strong id="k-total">0</strong></div>
-            <div class="kpi ok"><span>Completados</span><strong id="k-ok">0</strong></div>
-            <div class="kpi warn"><span>Denegados</span><strong id="k-den">0</strong></div>
-            <div class="kpi danger"><span>Sospechosos</span><strong id="k-sos">0</strong></div>
-        </section>
-
-        <section class="card" aria-labelledby="t-cuentas">
-            <h2 id="t-cuentas">Cuentas <small>Haz clic en una cuenta para enviarle dinero</small></h2>
-            <div id="cuentas" class="cuentas"></div>
-            <p id="cuentas-vacio" class="vacio">Aún no hay cuentas. Haz una recarga para crear la primera.</p>
-        </section>
-
-        <section class="card" aria-labelledby="t-movs">
-            <h2 id="t-movs">Movimientos <small id="movs-contador"></small></h2>
-            <div class="toolbar">
-                <div class="filtros" role="group" aria-label="Filtrar movimientos">
-                    <button type="button" data-filtro="todos" aria-pressed="true">Todos</button>
-                    <button type="button" data-filtro="envios" aria-pressed="false">Envíos</button>
-                    <button type="button" data-filtro="recargas" aria-pressed="false">Recargas</button>
-                    <button type="button" data-filtro="denegados" aria-pressed="false">Denegados</button>
-                    <button type="button" data-filtro="sospechosos" aria-pressed="false">Sospechosos</button>
-                </div>
-                <label class="buscar"><span class="sr-only">Buscar</span>
-                    <input id="buscar" type="search" placeholder="Buscar por usuario o tx_id">
-                </label>
-                <label class="solo-mios"><input id="solo-mios" type="checkbox"> Solo los míos</label>
-            </div>
-            <ul id="movs" class="movs"></ul>
-            <p id="movs-vacio" class="vacio">Esperando movimientos…</p>
-        </section>
-    </div>
-</main>
+</div>
 
 <datalist id="lista-usuarios"></datalist>
+<div id="alertas-pantalla" class="alertas-pantalla" aria-live="assertive"></div>
 <div id="toasts" aria-live="polite"></div>
 
 <script src="guilloche.js"></script>
-<script>
-    const WS_URL = "ws://localhost:8081/ws";
-    const API = "http://localhost:8080";
-
-    const MOTIVOS = {
-        INSUFFICIENT_FUNDS: "Fondos insuficientes",
-        CURRENCY_MISMATCH: "La divisa no coincide con la de la cuenta",
-        AMOUNT_LIMIT_EXCEEDED: "Supera el límite por operación",
-        HIGH_VALUE_TRANSACTION: "Monto inusualmente alto",
-        ANOMALOUS_FREQUENCY: "Demasiadas operaciones seguidas"
-    };
-
-    // ---------- Sesión: sin sesión vigente no se puede ver la banca ----------
-    const CLAVE_SESION = "ledger.sesion";
-    const SESION = (() => {
-        try {
-            const s = JSON.parse(sessionStorage.getItem(CLAVE_SESION) || "null");
-            return s && new Date(s.expires_at) > new Date() ? s : null;
-        } catch (e) { return null; }
-    })();
-    if (!SESION) {
-        location.replace("login.html");
-        throw new Error("Sin sesión: redirigiendo al login");
-    }
-
-    function terminarSesion(texto, tipo) {
-        try {
-            sessionStorage.removeItem(CLAVE_SESION);
-            sessionStorage.setItem("ledger.aviso", JSON.stringify({ texto, tipo }));
-        } catch (e) { /* sin almacenamiento */ }
-        location.replace("login.html");
-    }
-    const sesionVencida = () => terminarSesion("Tu sesión venció. Vuelve a ingresar.", "aviso");
-
-    const estado = {
-        movimientos: new Map(),
-        cuentas: new Map(),
-        pendientes: new Map(),
-        filtro: "todos",
-        busqueda: "",
-        soloMios: false,
-        usuario: SESION.username
-    };
-
-    const $ = (id) => document.getElementById(id);
-
-    // ---------- Utilidades ----------
-    function dinero(valor, divisa) {
-        try {
-            return new Intl.NumberFormat("es-CO", { style: "currency", currency: divisa || "USD", minimumFractionDigits: 2 })
-                .format(Number(valor || 0));
-        } catch (e) {
-            return (divisa || "") + " " + Number(valor || 0).toFixed(2);
-        }
-    }
-    function hora(iso) {
-        return iso ? new Date(iso).toLocaleTimeString("es-CO") : "";
-    }
-    function mismoUsuario(a, b) {
-        return (a || "").trim().toLowerCase() === (b || "").trim().toLowerCase();
-    }
-    function el(tag, clase, texto) {
-        const nodo = document.createElement(tag);
-        if (clase) nodo.className = clase;
-        if (texto !== undefined) nodo.textContent = texto;
-        return nodo;
-    }
-    /** Aviso emergente: entra con transición (@starting-style) y sale más rápido de lo que entra. */
-    function toast(texto, tipo) {
-        const t = el("div", "toast " + (tipo || ""), texto);
-        $("toasts").append(t);
-        setTimeout(() => {
-            t.classList.add("saliendo");
-            setTimeout(() => t.remove(), 220);
-        }, 5000);
-    }
-    function esDenegado(m) { return m.status === "REJECTED"; }
-    function esRecarga(m) { return m.type === "DEPOSIT"; }
-
-    // ---------- Billetera ----------
-    function cuentaActiva() {
-        return [...estado.cuentas.values()].find(c => mismoUsuario(c.user, estado.usuario));
-    }
-
-    function pintarSaldo() {
-        const cuenta = cuentaActiva();
-        $("saldo-actual").textContent = dinero(cuenta ? cuenta.balance : 0, cuenta ? cuenta.currency : "USD");
-        $("saldo-nota").textContent = cuenta
-            ? "Cuenta @" + cuenta.user + ", actualizada a las " + hora(cuenta.updated_at)
-            : "Tu cuenta está en $0: recárgala para empezar a enviar";
-        validarMontoEnvio();
-    }
-
-    function validarMontoEnvio() {
-        const monto = Number($("form-enviar").amount.value || 0);
-        const cuenta = cuentaActiva();
-        const saldo = cuenta ? Number(cuenta.balance) : 0;
-        $("aviso-saldo").hidden = !(monto > 0 && monto > saldo);
-    }
-
-    /** Prepara un envío a otra cuenta: abre la pestaña Enviar con el destinatario listo. */
-    function prepararEnvio(destino) {
-        cambiarPestana("enviar");
-        const f = $("form-enviar");
-        f.to_user.value = destino;
-        f.amount.focus();
-    }
-
-    function cambiarPestana(cual) {
-        const enviar = cual === "enviar";
-        $("tab-enviar").setAttribute("aria-selected", String(enviar));
-        $("tab-recargar").setAttribute("aria-selected", String(!enviar));
-        $("form-enviar").hidden = !enviar;
-        $("form-recargar").hidden = enviar;
-        document.querySelector(".tabs").dataset.activa = cual; // mueve el indicador deslizante
-    }
-
-    // ---------- Cuentas ----------
-    function pintarCuentas() {
-        const contenedor = $("cuentas");
-        contenedor.replaceChildren();
-        const lista = [...estado.cuentas.values()];
-        $("cuentas-vacio").hidden = lista.length > 0;
-
-        lista.forEach(c => {
-            const propia = mismoUsuario(c.user, estado.usuario);
-            const tarjeta = el("button", "cuenta" + (propia ? " activa" : ""));
-            tarjeta.type = "button";
-            tarjeta.title = propia ? "Tu cuenta: recárgala" : "Enviar dinero a " + c.user;
-            tarjeta.append(el("span", "avatar", c.user.slice(0, 2).toUpperCase()));
-            const info = el("div");
-            info.append(el("b", "", propia ? c.user + " (tú)" : c.user), el("small", "", dinero(c.balance, c.currency)));
-            tarjeta.append(info);
-            tarjeta.addEventListener("click", () => propia ? cambiarPestana("recargar") : prepararEnvio(c.user));
-            contenedor.append(tarjeta);
-        });
-
-        const datalist = $("lista-usuarios");
-        datalist.replaceChildren(...lista.map(c => { const o = el("option"); o.value = c.user; return o; }));
-    }
-
-    function aplicarCuentas(cuentas) {
-        if (!Array.isArray(cuentas)) return;
-        estado.cuentas.clear();
-        cuentas.forEach(c => estado.cuentas.set(c.user.toLowerCase(), c));
-        pintarCuentas();
-        pintarSaldo();
-    }
-
-    // ---------- Movimientos ----------
-    function pasaFiltros(m) {
-        const filtros = {
-            todos: () => true,
-            envios: () => !esRecarga(m),
-            recargas: () => esRecarga(m),
-            denegados: () => esDenegado(m),
-            sospechosos: () => m.suspicious
-        };
-        const texto = estado.busqueda;
-        const coincideTexto = !texto || [m.from_user, m.to_user, m.tx_id].some(v => (v || "").toLowerCase().includes(texto));
-        const mio = !estado.soloMios || mismoUsuario(m.from_user, estado.usuario) || mismoUsuario(m.to_user, estado.usuario);
-        return filtros[estado.filtro]() && coincideTexto && mio;
-    }
-
-    function describir(m) {
-        if (esRecarga(m)) {
-            return { icono: "+", titulo: "Recarga · " + m.to_user, signo: "mas" };
-        }
-        const envia = mismoUsuario(m.from_user, estado.usuario);
-        const recibe = mismoUsuario(m.to_user, estado.usuario);
-        const titulos = esDenegado(m)
-            ? { envia: "Intentaste enviar a " + m.to_user, recibe: m.from_user + " intentó enviarte" }
-            : { envia: "Enviaste a " + m.to_user, recibe: "Recibiste de " + m.from_user };
-        const titulo = envia ? titulos.envia
-            : recibe ? titulos.recibe
-            : m.from_user + " → " + m.to_user;
-        return { icono: recibe ? "↙" : "↗", titulo, signo: recibe ? "mas" : "menos" };
-    }
-
-    function crearFila(m, nuevo) {
-        const d = describir(m);
-        const clases = ["mov"];
-        if (esRecarga(m)) clases.push("recarga");
-        if (esDenegado(m)) clases.push("denegada");
-        if (m.suspicious) clases.push("sospechosa");
-        if (nuevo) clases.push("nuevo");
-
-        const li = el("li", clases.join(" "));
-        li.dataset.txId = m.tx_id;
-        li.append(el("div", "icono", m.suspicious ? "!" : d.icono));
-
-        const info = el("div", "info");
-        info.append(el("b", "", d.titulo));
-        info.append(el("small", "", hora(m.timestamp) + " · #" + m.tx_id.slice(0, 8)));
-        const motivo = m.suspicious ? "Sospechosa: " + (MOTIVOS[m.fraud_reason] || m.fraud_reason)
-            : esDenegado(m) ? "Denegada: " + (MOTIVOS[m.reason] || m.reason || "operación no permitida")
-            : "";
-        if (motivo) info.append(el("span", "motivo", motivo));
-        li.append(info);
-
-        const lado = el("div", "lado");
-        const signo = esDenegado(m) ? "" : (d.signo === "mas" ? "+" : "−");
-        lado.append(el("span", "monto " + d.signo, signo + dinero(m.amount, m.currency)));
-        const estadoTexto = m.suspicious ? "Sospechosa" : esDenegado(m) ? "Denegada" : "Completada";
-        lado.append(el("span", "badge " + (m.suspicious ? "SUSPICIOUS" : m.status), estadoTexto));
-        li.append(lado);
-        return li;
-    }
-
-    function pintarMovimientos(resaltar) {
-        const lista = [...estado.movimientos.values()]
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const visibles = lista.filter(pasaFiltros);
-        $("movs").replaceChildren(...visibles.map(m => crearFila(m, m.tx_id === resaltar)));
-        $("movs-vacio").hidden = visibles.length > 0;
-        $("movs-vacio").textContent = lista.length ? "No hay movimientos con estos filtros." : "Esperando movimientos…";
-        $("movs-contador").textContent = visibles.length === lista.length
-            ? lista.length + " en total"
-            : visibles.length + " de " + lista.length;
-
-        $("k-total").textContent = lista.length;
-        // Una sospechosa también se completó (el dinero se movió); por eso cuenta como completada
-        $("k-ok").textContent = lista.filter(m => m.status === "COMPLETED" || m.status === "SUSPICIOUS").length;
-        $("k-den").textContent = lista.filter(esDenegado).length;
-        $("k-sos").textContent = lista.filter(m => m.suspicious).length;
-    }
-
-    function avisarResultado(m) {
-        const descripcion = estado.pendientes.get(m.tx_id);
-        const anterior = estado.movimientos.get(m.tx_id);
-        if (m.suspicious && !(anterior && anterior.suspicious)) {
-            toast("Alerta de fraude: " + (MOTIVOS[m.fraud_reason] || m.fraud_reason) + " (" + dinero(m.amount, m.currency) + ")", "danger");
-        }
-        if (!descripcion) return;
-        estado.pendientes.delete(m.tx_id);
-        if (esDenegado(m)) {
-            toast("No se pudo: " + descripcion + " (" + (MOTIVOS[m.reason] || m.reason).toLowerCase() + ")", "warn");
-        } else {
-            toast("Listo: " + descripcion, "ok");
-        }
-    }
-
-    function upsert(m) {
-        avisarResultado(m);
-        estado.movimientos.set(m.tx_id, m);
-        pintarMovimientos(m.tx_id);
-    }
-
-    // ---------- Comunicación ----------
-    function conectar() {
-        const ws = new WebSocket(WS_URL);
-        ws.onopen = () => {
-            $("conexion").classList.add("on");
-            $("conexion-texto").textContent = "En vivo";
-        };
-        ws.onclose = () => {
-            $("conexion").classList.remove("on");
-            $("conexion-texto").textContent = "Reconectando…";
-            setTimeout(conectar, 2000);
-        };
-        ws.onmessage = (evento) => {
-            const datos = JSON.parse(evento.data);
-            aplicarCuentas(datos.accounts);
-            if (datos.type === "SNAPSHOT") {
-                estado.movimientos.clear();
-                (datos.transactions || []).forEach(m => estado.movimientos.set(m.tx_id, m));
-                pintarMovimientos();
-            }
-            if (datos.type === "UPSERT" && datos.transaction) upsert(datos.transaction);
-        };
-    }
-
-    /**
-     * Las operaciones del titular viajan con su token: el servidor toma de la sesión quién
-     * envía o recarga. Los escenarios de demostración (otros clientes) van sin token.
-     */
-    async function post(ruta, cuerpo, descripcion, conSesion = true) {
-        const headers = { "Content-Type": "application/json" };
-        if (conSesion) headers.Authorization = "Bearer " + SESION.token;
-        const respuesta = await fetch(API + ruta, { method: "POST", headers, body: JSON.stringify(cuerpo) });
-        const json = await respuesta.json().catch(() => ({}));
-        if (respuesta.status === 401 && conSesion) {
-            sesionVencida();
-            throw new Error("Tu sesión venció");
-        }
-        if (!respuesta.ok) throw new Error(json.message || ("Error " + respuesta.status));
-        estado.pendientes.set(json.tx_id, descripcion);
-        return json;
-    }
-
-    async function cerrarSesion() {
-        $("salir").disabled = true;
-        try {
-            await fetch(API + "/auth/logout", { method: "POST", headers: { Authorization: "Bearer " + SESION.token } });
-        } catch (e) { /* aunque el servidor no responda, la sesión local se cierra */ }
-        terminarSesion("Cerraste tu sesión.", "info");
-    }
-
-    /** Confirma con el servidor que el token sigue vigente y vigila su vencimiento. */
-    async function verificarSesion() {
-        try {
-            const r = await fetch(API + "/auth/me", { headers: { Authorization: "Bearer " + SESION.token } });
-            if (r.status === 401) sesionVencida();
-        } catch (e) { /* sin conexión: se reintenta en la próxima operación */ }
-        const restante = new Date(SESION.expires_at) - new Date();
-        setTimeout(sesionVencida, Math.max(0, restante));
-    }
-
-    async function ejecutar(boton, accion) {
-        boton.disabled = true;
-        try {
-            await accion();
-        } catch (e) {
-            toast(e.message.startsWith("Failed") ? "No se pudo contactar transaction_api (" + API + ")" : e.message, "danger");
-        } finally {
-            boton.disabled = false;
-        }
-    }
-
-    // ---------- Eventos de la interfaz ----------
-    $("salir").addEventListener("click", cerrarSesion);
-    $("tab-enviar").addEventListener("click", () => cambiarPestana("enviar"));
-    $("tab-recargar").addEventListener("click", () => cambiarPestana("recargar"));
-    $("form-enviar").amount.addEventListener("input", validarMontoEnvio);
-
-    $("form-enviar").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const f = e.target;
-        const cuerpo = { from_user: estado.usuario, to_user: f.to_user.value.trim(), amount: Number(f.amount.value), currency: f.currency.value };
-        ejecutar(f.querySelector("button[type=submit]"), async () => {
-            await post("/transfer", cuerpo, "Envío de " + dinero(cuerpo.amount, cuerpo.currency) + " a " + cuerpo.to_user);
-            toast("Envío en proceso…");
-            f.amount.value = "";
-            validarMontoEnvio();
-        });
-    });
-
-    $("form-recargar").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const f = e.target;
-        const cuerpo = { user: estado.usuario, amount: Number(f.amount.value), currency: f.currency.value };
-        ejecutar(f.querySelector("button[type=submit]"), async () => {
-            await post("/deposit", cuerpo, "Recarga de " + dinero(cuerpo.amount, cuerpo.currency));
-            toast("Recarga en proceso…");
-            f.amount.value = "";
-        });
-    });
-
-    document.querySelectorAll(".chips button").forEach(b => b.addEventListener("click", () => {
-        const campo = $("form-recargar").amount;
-        campo.value = Number(campo.value || 0) + Number(b.dataset.monto);
-    }));
-
-    document.querySelectorAll(".filtros button").forEach(b => b.addEventListener("click", () => {
-        estado.filtro = b.dataset.filtro;
-        document.querySelectorAll(".filtros button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
-        pintarMovimientos();
-    }));
-    $("buscar").addEventListener("input", (e) => { estado.busqueda = e.target.value.trim().toLowerCase(); pintarMovimientos(); });
-    $("solo-mios").addEventListener("change", (e) => { estado.soloMios = e.target.checked; pintarMovimientos(); });
-
-    $("demo-fraude").addEventListener("click", (e) => ejecutar(e.currentTarget, async () => {
-        await post("/deposit", { user: "C", amount: 25000, currency: "USD" }, "Recarga de C", false);
-        await post("/transfer", { from_user: "C", to_user: "D", amount: 20000, currency: "USD" }, "Envío de $20.000 de C a D", false);
-        toast("Escenario enviado: recarga a C y envío de $20.000 a D");
-    }));
-    $("demo-denegada").addEventListener("click", (e) => ejecutar(e.currentTarget, async () => {
-        await post("/transfer", { from_user: "Z", to_user: "A", amount: 100, currency: "USD" }, "Envío de Z a A", false);
-        toast("Escenario enviado: Z intenta enviar $100 sin saldo");
-    }));
-
-    $("titular-nombre").textContent = SESION.full_name;
-    $("titular-usuario").textContent = "@" + SESION.username;
-    pintarSaldo();
-    pintarCuentas();
-    pintarMovimientos();
-    // Roseta en la esquina de la tarjeta de saldo: solo se dibuja al entrar, nunca al cambiar el saldo
-    window.Guilloche.montar(document.querySelector(".saldo canvas"), {
-        geometria: (ancho, alto) => ({ x: ancho * 0.95, y: alto * 0.05, escala: Math.min(ancho, alto) * 0.48 }),
-        duracion: 1100
-    });
-    verificarSesion();
-    conectar();
-</script>
+<script src="app.js"></script>
 </body>
 </html>

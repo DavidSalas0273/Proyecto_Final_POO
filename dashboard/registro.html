@@ -9,6 +9,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;650;700&display=swap">
     <link rel="stylesheet" href="acceso.css">
+    <!-- Aplica el tema elegido (claro/oscuro) antes de pintar, para que no parpadee -->
+    <script>try { const t = localStorage.getItem("ledger.tema"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body data-pagina="registro">
 <div class="acceso">
