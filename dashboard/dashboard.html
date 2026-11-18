@@ -82,6 +82,19 @@
         }
         .conexion .dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
         .conexion.on { background: var(--ok-soft); color: var(--ok); }
+        .sesion { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .titular { display: grid; line-height: 1.2; text-align: right; }
+        .titular small { color: var(--muted); font-size: 12px; }
+        .salir {
+            border: 1px solid var(--border); background: var(--panel); border-radius: 10px;
+            padding: 8px 12px; font-weight: 600; cursor: pointer;
+            transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .salir:active { transform: scale(0.97); }
+        @media (hover: hover) and (pointer: fine) { .salir:hover { border-color: var(--danger); color: var(--danger); } }
+        .demo-nota { display: block; color: var(--muted); margin-top: 6px; }
+        .btn { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+        .btn:active { transform: scale(0.97); }
 
         /* ---------- Layout ---------- */
         main {
@@ -259,7 +272,11 @@
             <p>Transferencias y recargas en tiempo real</p>
         </div>
     </div>
-    <span id="conexion" class="conexion" role="status"><span class="dot"></span><span id="conexion-texto">Desconectado</span></span>
+    <div class="sesion">
+        <span id="conexion" class="conexion" role="status"><span class="dot"></span><span id="conexion-texto">Desconectado</span></span>
+        <span class="titular"><b id="titular-nombre"></b><small id="titular-usuario"></small></span>
+        <button type="button" id="salir" class="salir">Cerrar sesión</button>
+    </div>
 </header>
 
 <main>
@@ -267,11 +284,6 @@
     <div class="col">
         <section class="card" aria-labelledby="t-billetera">
             <h2 id="t-billetera">Mi billetera</h2>
-
-            <label class="campo">
-                <span>Usuario activo</span>
-                <input id="usuario" list="lista-usuarios" value="A" autocomplete="off" required>
-            </label>
 
             <div class="saldo">
                 <span>Saldo disponible</span>
@@ -327,6 +339,7 @@
 
         <details class="card">
             <summary>Escenarios de demostración</summary>
+            <small class="demo-nota">Simulan operaciones de otros clientes (C, D y Z); no usan tu cuenta.</small>
             <div class="demos">
                 <button type="button" class="btn secundario" id="demo-fraude">
                     Transferencia sospechosa ($20.000)
@@ -350,7 +363,7 @@
         </section>
 
         <section class="card" aria-labelledby="t-cuentas">
-            <h2 id="t-cuentas">Cuentas <small>Haz clic en una cuenta para operar con ella</small></h2>
+            <h2 id="t-cuentas">Cuentas <small>Haz clic en una cuenta para enviarle dinero</small></h2>
             <div id="cuentas" class="cuentas"></div>
             <p id="cuentas-vacio" class="vacio">Aún no hay cuentas. Haz una recarga para crear la primera.</p>
         </section>
@@ -391,6 +404,28 @@
         ANOMALOUS_FREQUENCY: "Demasiadas operaciones seguidas"
     };
 
+    // ---------- Sesión: sin sesión vigente no se puede ver la banca ----------
+    const CLAVE_SESION = "ledger.sesion";
+    const SESION = (() => {
+        try {
+            const s = JSON.parse(sessionStorage.getItem(CLAVE_SESION) || "null");
+            return s && new Date(s.expires_at) > new Date() ? s : null;
+        } catch (e) { return null; }
+    })();
+    if (!SESION) {
+        location.replace("login.html");
+        throw new Error("Sin sesión: redirigiendo al login");
+    }
+
+    function terminarSesion(texto, tipo) {
+        try {
+            sessionStorage.removeItem(CLAVE_SESION);
+            sessionStorage.setItem("ledger.aviso", JSON.stringify({ texto, tipo }));
+        } catch (e) { /* sin almacenamiento */ }
+        location.replace("login.html");
+    }
+    const sesionVencida = () => terminarSesion("Tu sesión venció. Vuelve a ingresar.", "aviso");
+
     const estado = {
         movimientos: new Map(),
         cuentas: new Map(),
@@ -398,18 +433,12 @@
         filtro: "todos",
         busqueda: "",
         soloMios: false,
-        usuario: leerPreferencia("ledger.usuario") || "A"
+        usuario: SESION.username
     };
 
     const $ = (id) => document.getElementById(id);
 
     // ---------- Utilidades ----------
-    function leerPreferencia(clave) {
-        try { return localStorage.getItem(clave); } catch (e) { return null; }
-    }
-    function guardarPreferencia(clave, valor) {
-        try { localStorage.setItem(clave, valor); } catch (e) { /* almacenamiento no disponible */ }
-    }
     function dinero(valor, divisa) {
         try {
             return new Intl.NumberFormat("es-CO", { style: "currency", currency: divisa || "USD", minimumFractionDigits: 2 })
@@ -447,8 +476,8 @@
         const cuenta = cuentaActiva();
         $("saldo-actual").textContent = dinero(cuenta ? cuenta.balance : 0, cuenta ? cuenta.currency : "USD");
         $("saldo-nota").textContent = cuenta
-            ? "Cuenta de " + cuenta.user + " · actualizado " + hora(cuenta.updated_at)
-            : "Cuenta nueva: recarga para empezar a enviar";
+            ? "Cuenta @" + cuenta.user + ", actualizada a las " + hora(cuenta.updated_at)
+            : "Tu cuenta está en $0: recárgala para empezar a enviar";
         validarMontoEnvio();
     }
 
@@ -459,13 +488,12 @@
         $("aviso-saldo").hidden = !(monto > 0 && monto > saldo);
     }
 
-    function seleccionarUsuario(usuario) {
-        estado.usuario = usuario.trim();
-        $("usuario").value = estado.usuario;
-        guardarPreferencia("ledger.usuario", estado.usuario);
-        pintarSaldo();
-        pintarCuentas();
-        pintarMovimientos();
+    /** Prepara un envío a otra cuenta: abre la pestaña Enviar con el destinatario listo. */
+    function prepararEnvio(destino) {
+        cambiarPestana("enviar");
+        const f = $("form-enviar");
+        f.to_user.value = destino;
+        f.amount.focus();
     }
 
     function cambiarPestana(cual) {
@@ -484,14 +512,15 @@
         $("cuentas-vacio").hidden = lista.length > 0;
 
         lista.forEach(c => {
-            const tarjeta = el("button", "cuenta" + (mismoUsuario(c.user, estado.usuario) ? " activa" : ""));
+            const propia = mismoUsuario(c.user, estado.usuario);
+            const tarjeta = el("button", "cuenta" + (propia ? " activa" : ""));
             tarjeta.type = "button";
-            tarjeta.title = "Operar como " + c.user;
+            tarjeta.title = propia ? "Tu cuenta: recárgala" : "Enviar dinero a " + c.user;
             tarjeta.append(el("span", "avatar", c.user.slice(0, 2).toUpperCase()));
             const info = el("div");
-            info.append(el("b", "", c.user), el("small", "", dinero(c.balance, c.currency)));
+            info.append(el("b", "", propia ? c.user + " (tú)" : c.user), el("small", "", dinero(c.balance, c.currency)));
             tarjeta.append(info);
-            tarjeta.addEventListener("click", () => seleccionarUsuario(c.user));
+            tarjeta.addEventListener("click", () => propia ? cambiarPestana("recargar") : prepararEnvio(c.user));
             contenedor.append(tarjeta);
         });
 
@@ -630,16 +659,40 @@
         };
     }
 
-    async function post(ruta, cuerpo, descripcion) {
-        const respuesta = await fetch(API + ruta, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(cuerpo)
-        });
+    /**
+     * Las operaciones del titular viajan con su token: el servidor toma de la sesión quién
+     * envía o recarga. Los escenarios de demostración (otros clientes) van sin token.
+     */
+    async function post(ruta, cuerpo, descripcion, conSesion = true) {
+        const headers = { "Content-Type": "application/json" };
+        if (conSesion) headers.Authorization = "Bearer " + SESION.token;
+        const respuesta = await fetch(API + ruta, { method: "POST", headers, body: JSON.stringify(cuerpo) });
         const json = await respuesta.json().catch(() => ({}));
+        if (respuesta.status === 401 && conSesion) {
+            sesionVencida();
+            throw new Error("Tu sesión venció");
+        }
         if (!respuesta.ok) throw new Error(json.message || ("Error " + respuesta.status));
         estado.pendientes.set(json.tx_id, descripcion);
         return json;
+    }
+
+    async function cerrarSesion() {
+        $("salir").disabled = true;
+        try {
+            await fetch(API + "/auth/logout", { method: "POST", headers: { Authorization: "Bearer " + SESION.token } });
+        } catch (e) { /* aunque el servidor no responda, la sesión local se cierra */ }
+        terminarSesion("Cerraste tu sesión.", "info");
+    }
+
+    /** Confirma con el servidor que el token sigue vigente y vigila su vencimiento. */
+    async function verificarSesion() {
+        try {
+            const r = await fetch(API + "/auth/me", { headers: { Authorization: "Bearer " + SESION.token } });
+            if (r.status === 401) sesionVencida();
+        } catch (e) { /* sin conexión: se reintenta en la próxima operación */ }
+        const restante = new Date(SESION.expires_at) - new Date();
+        setTimeout(sesionVencida, Math.max(0, restante));
     }
 
     async function ejecutar(boton, accion) {
@@ -654,7 +707,7 @@
     }
 
     // ---------- Eventos de la interfaz ----------
-    $("usuario").addEventListener("change", (e) => e.target.value.trim() && seleccionarUsuario(e.target.value));
+    $("salir").addEventListener("click", cerrarSesion);
     $("tab-enviar").addEventListener("click", () => cambiarPestana("enviar"));
     $("tab-recargar").addEventListener("click", () => cambiarPestana("recargar"));
     $("form-enviar").amount.addEventListener("input", validarMontoEnvio);
@@ -696,17 +749,21 @@
     $("solo-mios").addEventListener("change", (e) => { estado.soloMios = e.target.checked; pintarMovimientos(); });
 
     $("demo-fraude").addEventListener("click", (e) => ejecutar(e.currentTarget, async () => {
-        await post("/deposit", { user: "C", amount: 25000, currency: "USD" }, "Recarga de C");
-        await post("/transfer", { from_user: "C", to_user: "D", amount: 20000, currency: "USD" }, "Envío de $20.000 de C a D");
+        await post("/deposit", { user: "C", amount: 25000, currency: "USD" }, "Recarga de C", false);
+        await post("/transfer", { from_user: "C", to_user: "D", amount: 20000, currency: "USD" }, "Envío de $20.000 de C a D", false);
         toast("Escenario enviado: recarga a C y envío de $20.000 a D");
     }));
     $("demo-denegada").addEventListener("click", (e) => ejecutar(e.currentTarget, async () => {
-        await post("/transfer", { from_user: "Z", to_user: "A", amount: 100, currency: "USD" }, "Envío de Z a A");
+        await post("/transfer", { from_user: "Z", to_user: "A", amount: 100, currency: "USD" }, "Envío de Z a A", false);
         toast("Escenario enviado: Z intenta enviar $100 sin saldo");
     }));
 
-    seleccionarUsuario(estado.usuario);
+    $("titular-nombre").textContent = SESION.full_name;
+    $("titular-usuario").textContent = "@" + SESION.username;
+    pintarSaldo();
+    pintarCuentas();
     pintarMovimientos();
+    verificarSesion();
     conectar();
 </script>
 </body>

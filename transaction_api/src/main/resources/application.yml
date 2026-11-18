@@ -9,7 +9,20 @@ spring:
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:ledger}
     password: ${RABBITMQ_PASSWORD:ledger}
+  # Usuarios y sesiones de la banca en línea
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/${POSTGRES_DB:ledger}
+    username: ${POSTGRES_USER:ledger}
+    password: ${POSTGRES_PASSWORD:ledger}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
 
 ledger:
   rabbit:
     transfer-queue: transfer_commands
+  auth:
+    duracion-sesion-minutos: ${LEDGER_SESION_MINUTOS:30}

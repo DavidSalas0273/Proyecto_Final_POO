@@ -10,6 +10,7 @@ El proyecto está desarrollado en Java 17 con Spring Boot 3.2 y está compuesto 
 - [Arquitectura](#arquitectura)
 - [Microservicios](#microservicios)
 - [Funcionamiento del sistema](#funcionamiento-del-sistema)
+- [Banca en línea: registro e inicio de sesión](#banca-en-línea-registro-e-inicio-de-sesión)
 - [Dashboard](#dashboard)
 - [Diseño y patrones de software](#diseño-y-patrones-de-software)
 - [Tecnologías](#tecnologías)
@@ -127,6 +128,43 @@ En este escenario:
 Cada evento del ledger contiene información sobre los saldos resultantes de las cuentas involucradas, mediante los campos `from_balance` y `to_balance`.
 
 Esta información permite que el dashboard actualice los saldos en tiempo real a partir de los eventos recibidos, sin necesidad de consultar PostgreSQL para cada actualización.
+
+## Banca en línea: registro e inicio de sesión
+
+Las pantallas `dashboard/login.html` y `dashboard/registro.html` dan acceso al dashboard. Sin una sesión vigente, `dashboard.html` redirige al login.
+
+| Endpoint (`transaction_api`, puerto 8080) | Qué hace |
+|---|---|
+| `POST /auth/register` | Abre la cuenta (nombre, documento, correo, usuario, contraseña) y devuelve una sesión |
+| `POST /auth/login` | Ingresa con usuario o correo |
+| `GET /auth/me` | Devuelve el titular de la sesión (cabecera `Authorization: Bearer <token>`) |
+| `POST /auth/logout` | Cierra la sesión |
+
+- **Contraseñas:** se guardan solo como hash **BCrypt** (sal propia y costo 10), con el algoritmo de `spring-security-crypto`. No se usa la cadena de filtros de Spring Security.
+- **Bloqueo:** tras **5 intentos fallidos**, el acceso queda bloqueado **15 minutos** (HTTP 423). Esa regla vive en la entidad rica `Usuario.autenticar()`.
+- **Mensaje de error genérico:** el login nunca dice si lo que falló fue el usuario o la contraseña.
+- **Sesiones:**
+  - El token es aleatorio de 256 bits (`SecureRandom`) y se guarda en la tabla `sesiones`.
+  - Vence a los 30 minutos (`LEDGER_SESION_MINUTOS`). El navegador lo guarda en `sessionStorage`, que se borra al cerrar la pestaña.
+- **Operaciones con sesión:** `POST /transfer` y `POST /deposit` toman al titular desde el token e ignoran el `from_user` del cuerpo. Una cabecera `Authorization` vacía, falsa o vencida responde **401**.
+- **Operaciones sin cabecera:** se mantiene el contrato del enunciado (`from_user` en el cuerpo). Lo usan los flujos de prueba y los escenarios de demostración.
+- **Tablas nuevas:** `usuarios` y `sesiones`, en PostgreSQL. Por eso `transaction_api` ahora está en la red `persistence-net`.
+
+**Diseño de las pantallas:** la identidad se basa en la impresión de seguridad de los billetes. El elemento distintivo es una roseta guilloché que se dibuja una sola vez al cargar. Las interacciones siguen los principios de Emil Kowalski:
+
+- Curvas *ease-out* propias.
+- Botones con `scale(0.97)` al presionar.
+- *Crossfade* con desenfoque en el estado de carga.
+- Hover solo en dispositivos con puntero.
+- Respeto a `prefers-reduced-motion`.
+
+Además, ambas pantallas incluyen:
+
+- medidor de fortaleza y requisitos de contraseña en vivo;
+- aviso de mayúsculas activadas;
+- botón para mostrar u ocultar la contraseña;
+- validación idéntica a la del servidor;
+- modo claro y oscuro.
 
 ## Dashboard
 

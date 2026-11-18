@@ -134,20 +134,24 @@ services:
     image: ledger/transaction-api:1.0.0
     container_name: transaction_api
     environment:
-      <<: [*rabbit-env, *jvm-env]
+      <<: [*rabbit-env, *postgres-env, *jvm-env]   # PostgreSQL: usuarios y sesiones de la banca en línea
+      LEDGER_SESION_MINUTOS: "30"
     ports:
       - "8080:8080"
     networks:
       - messaging-net
+      - persistence-net
       - public-net
     depends_on:
       rabbitmq:
+        condition: service_healthy
+      postgres-db:
         condition: service_healthy
     deploy:
       resources:
         limits:
           cpus: "0.50"
-          memory: 384M
+          memory: 512M
     restart: on-failure
 
   transaction_processor:

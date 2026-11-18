@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#10233a">
+    <title>Abrir cuenta · Ledger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;650;700&display=swap">
+    <link rel="stylesheet" href="acceso.css">
+</head>
+<body data-pagina="registro">
+<div class="acceso">
+    <aside class="marca" aria-label="Ledger">
+        <canvas aria-hidden="true"></canvas>
+        <div class="wordmark"><b>Ledger</b><span>banca P2P</span></div>
+        <h2>Abre tu cuenta y empieza a mover dinero hoy.</h2>
+        <ul>
+            <li><b>Sin cuota de manejo</b> y sin monto mínimo de apertura.</li>
+            <li><b>Tu usuario es tu número de cuenta:</b> compártelo para que te envíen dinero.</li>
+            <li><b>Tu contraseña se guarda cifrada.</b> Ni siquiera nosotros podemos leerla.</li>
+        </ul>
+        <small>Proyecto académico de Programación Orientada a Objetos. Ledger no es una entidad financiera y no maneja dinero real.</small>
+    </aside>
+
+    <main class="panel">
+        <form id="form-registro" class="formulario" novalidate>
+            <header>
+                <h1>Abre tu cuenta</h1>
+                <p>Tu cuenta empieza en $0. Podrás recargarla apenas ingreses.</p>
+            </header>
+
+            <div id="alerta" class="alerta" role="alert" hidden></div>
+
+            <div class="campo">
+                <label for="nombre">Nombre completo</label>
+                <div class="control">
+                    <input id="nombre" name="nombre" type="text" autocomplete="name" aria-describedby="nombre-error" required>
+                </div>
+                <span id="nombre-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <div class="campo">
+                <label for="documento">Número de documento</label>
+                <div class="control">
+                    <input id="documento" name="documento" type="text" inputmode="numeric" autocomplete="off"
+                           aria-describedby="documento-error" required>
+                </div>
+                <span id="documento-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <div class="campo">
+                <label for="email">Correo electrónico</label>
+                <div class="control">
+                    <input id="email" name="email" type="email" inputmode="email" autocomplete="email"
+                           autocapitalize="none" spellcheck="false" aria-describedby="email-error" required>
+                </div>
+                <span id="email-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <div class="campo">
+                <label for="usuario">Usuario <span class="ayuda">Así te encontrarán para enviarte dinero</span></label>
+                <div class="control">
+                    <input id="usuario" name="usuario" type="text" autocomplete="username" autocapitalize="none"
+                           spellcheck="false" maxlength="20" aria-describedby="usuario-error" required>
+                </div>
+                <span id="usuario-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <div class="campo">
+                <label for="clave">Contraseña <span id="nivel-clave" class="ayuda" aria-live="polite"></span></label>
+                <div class="control con-boton">
+                    <input id="clave" name="clave" type="password" autocomplete="new-password"
+                           aria-describedby="clave-requisitos clave-error clave-mayus" required>
+                    <button type="button" class="mostrar" data-mostrar="clave" aria-pressed="false"
+                            aria-label="Mostrar contraseña">Mostrar</button>
+                </div>
+                <div class="fortaleza" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+                <ul id="clave-requisitos" class="requisitos">
+                    <li>8 caracteres o más</li>
+                    <li>Una letra</li>
+                    <li>Un número</li>
+                </ul>
+                <span id="clave-mayus" class="bloq-mayus" aria-live="polite"></span>
+                <span id="clave-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <div class="campo">
+                <label for="confirmacion">Confirma la contraseña</label>
+                <div class="control">
+                    <input id="confirmacion" name="confirmacion" type="password" autocomplete="new-password"
+                           aria-describedby="confirmacion-error" required>
+                </div>
+                <span id="confirmacion-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <div class="campo">
+                <label class="casilla" for="terminos">
+                    <input id="terminos" name="terminos" type="checkbox" aria-describedby="terminos-error">
+                    <span>Entiendo que Ledger es un proyecto académico y que los saldos no representan dinero real.</span>
+                </label>
+                <span id="terminos-error" class="error-campo" aria-live="polite"></span>
+            </div>
+
+            <button type="submit" class="boton">
+                <span class="texto">Abrir cuenta</span>
+                <span class="cargando" aria-hidden="true"><span class="spinner"></span>Abriendo tu cuenta</span>
+            </button>
+
+            <p class="cambio">¿Ya tienes cuenta? <a href="login.html">Ingresa</a></p>
+        </form>
+    </main>
+</div>
+<script src="acceso.js"></script>
+</body>
+</html>
