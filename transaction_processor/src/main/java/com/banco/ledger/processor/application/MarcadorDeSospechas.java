@@ -30,7 +30,7 @@ public class MarcadorDeSospechas {
     }
 
     @Transactional
-    public O5ptional<TransactionEventRecord> marcar(FraudAlertRecord alerta) {
+    public Optional<TransactionEventRecord> marcar(FraudAlertRecord alerta) {
         Transaccion transaccion = transacciones.buscar(new TransactionId(alerta.txId()))
                 .orElseThrow(() -> new IllegalStateException(
                         "La transacción " + alerta.txId() + " aún no está registrada en el ledger"));
