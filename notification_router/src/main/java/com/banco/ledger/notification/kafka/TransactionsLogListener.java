@@ -1,0 +1,26 @@
+package com.banco.ledger.notification.kafka;
+
+import com.banco.ledger.notification.dto.TransactionEventRecord;
+import com.banco.ledger.notification.service.EnrutadorNotificaciones;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
+@Component
+public class TransactionsLogListener {
+    private final EnrutadorNotificaciones enrutador;
+    private final ObjectMapper objectMapper;
+
+    public TransactionsLogListener(EnrutadorNotificaciones enrutador, ObjectMapper objectMapper) {
+        this.enrutador = enrutador;
+        this.objectMapper = objectMapper;
+    }
+
+    // Kafka: consume el topic transactions_log (grupo notification-router)
+    @KafkaListener(topics = "${ledger.kafka.transactions-topic}")
+    public void alRecibirEvento(String payload) throws JsonProcessingException {
+        enrutador.enrutar(objectMapper.readValue(payload, TransactionEventRecord.class));
+    }
+}

@@ -214,13 +214,27 @@ Se incluyen dos escenarios para comprobar el comportamiento del sistema:
 
 ## Diseño y patrones de software
 
-Los microservicios siguen una arquitectura hexagonal, separando la lógica de negocio de los mecanismos de comunicación y persistencia.
+Cada microservicio organiza su código en carpetas por tipo, de modo que cada cosa tiene un lugar fijo. Cada servicio solo incluye las carpetas que necesita:
 
-La estructura se divide en tres capas:
+| Carpeta | Contenido |
+|---|---|
+| `config/` | Configuración de Spring: beans, colas y topics. |
+| `controller/` | Endpoints REST y manejo de errores HTTP. |
+| `dto/` | Datos que viajan entre servicios o por HTTP: comandos, eventos, peticiones y respuestas. |
+| `service/` | Lógica que coordina cada caso de uso. |
+| `model/` | Objetos del negocio, como `Transaccion`, `CuentaBancaria` y `Usuario`. |
+| `estado/` | Estados de una transacción (patrón State). |
+| `regla/` | Reglas de validación y de fraude (patrón Strategy). |
+| `exception/` | Excepciones del negocio. |
+| `security/` | Cifrado de contraseñas y tokens de sesión. |
+| `rabbit/` | Publicadores y consumidores de RabbitMQ. |
+| `kafka/` | Publicadores y consumidores de Kafka. |
+| `websocket/` | Envío en vivo al dashboard. |
+| `repository/` | Acceso a PostgreSQL: interfaces, adaptadores y Spring Data. |
+| `entity/` | Entidades JPA que representan las tablas. |
+| `mail/` y `scheduler/` | Envío de correos y tareas programadas. |
 
-- `domain`: contiene las entidades, reglas de negocio y contratos.
-- `application`: implementa los casos de uso y los puertos.
-- `infrastructure`: contiene los adaptadores de RabbitMQ, Kafka, JPA, WebSocket y las configuraciones.
+Los servicios dependen de interfaces, como `TransaccionRepository` o `PublicadorEventosLedger`, y no de las clases concretas de RabbitMQ, Kafka o JPA. Así se aplica la inversión de dependencias (DIP).
 
 ### Modelo de dominio
 

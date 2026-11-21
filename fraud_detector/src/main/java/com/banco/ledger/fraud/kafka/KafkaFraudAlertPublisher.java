@@ -1,0 +1,33 @@
+package com.banco.ledger.fraud.kafka;
+
+import com.banco.ledger.fraud.dto.FraudAlertRecord;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+public class KafkaFraudAlertPublisher implements PublicadorAlertasFraude {
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+    private final String topic;
+
+    public KafkaFraudAlertPublisher(KafkaTemplate<String, String> kafkaTemplate, ObjectMapper objectMapper,
+                                    @Value("${ledger.kafka.fraud-alerts-topic}") String topic) {
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+        this.topic = topic;
+    }
+
+    @Override
+    public void publicar(FraudAlertRecord alerta) {
+        try {
+            // Kafka: publica la alerta en el topic fraud_alerts (key = tx_id)
+            kafkaTemplate.send(topic, alerta.txId(), objectMapper.writeValueAsString(alerta));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("No se pudo serializar la alerta " + alerta.txId(), e);
+        }
+    }
+}

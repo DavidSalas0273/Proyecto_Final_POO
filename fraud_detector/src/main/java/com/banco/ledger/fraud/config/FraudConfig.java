@@ -1,0 +1,52 @@
+package com.banco.ledger.fraud.config;
+
+import com.banco.ledger.fraud.model.HistorialTransacciones;
+import com.banco.ledger.fraud.regla.FrecuenciaAnomalaRegla;
+import com.banco.ledger.fraud.regla.PoliticaDeteccionFraude;
+import com.banco.ledger.fraud.regla.TransaccionAltoValorRegla;
+
+import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.TopicBuilder;
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.util.List;
+
+@Configuration
+public class FraudConfig {
+    @Bean
+    public Clock clock() {
+        return Clock.systemUTC();
+    }
+
+    @Bean
+    public HistorialTransacciones historialTransacciones(
+            @Value("${ledger.fraude.frecuencia.ventana-segundos}") long ventanaSegundos) {
+        return new HistorialTransacciones(Duration.ofSeconds(ventanaSegundos));
+    }
+
+    @Bean
+    public PoliticaDeteccionFraude politicaDeteccionFraude(
+            @Value("${ledger.fraude.umbral-alto-valor}") BigDecimal umbral,
+            @Value("${ledger.fraude.frecuencia.max-transacciones}") int maxTransacciones,
+            @Value("${ledger.fraude.frecuencia.ventana-segundos}") long ventanaSegundos) {
+        return new PoliticaDeteccionFraude(List.of(
+                new TransaccionAltoValorRegla(umbral),
+                new FrecuenciaAnomalaRegla(maxTransacciones, Duration.ofSeconds(ventanaSegundos))));
+    }
+
+    // Kafka: crea el topic fraud_alerts (3 particiones) si no existe
+    @Bean
+    public NewTopic fraudAlertsTopic(@Value("${ledger.kafka.fraud-alerts-topic}") String topic) {
+        return TopicBuilder.name(topic).partitions(3).replicas(1).build();
+    }
+
+    // Kafka: crea el topic transactions_log (3 particiones) si no existe
+    @Bean
+    public NewTopic transactionsLogTopic(@Value("${ledger.kafka.transactions-topic}") String topic) {
+        return TopicBuilder.name(topic).partitions(3).replicas(1).build();
+    }
+}

@@ -1,0 +1,28 @@
+package com.banco.ledger.processor.regla;
+
+import com.banco.ledger.processor.model.CuentaBancaria;
+import com.banco.ledger.processor.model.Transaccion;
+
+import java.math.BigDecimal;
+import java.util.Objects;
+import java.util.Optional;
+
+public class LimitePorTransaccionRegla implements ReglaValidacionTransaccion {
+    public static final String MOTIVO = "AMOUNT_LIMIT_EXCEEDED";
+
+    private final BigDecimal limite;
+
+    public LimitePorTransaccionRegla(BigDecimal limite) {
+        this.limite = Objects.requireNonNull(limite, "El límite es obligatorio");
+        if (limite.signum() <= 0) {
+            throw new IllegalArgumentException("El límite debe ser mayor que cero");
+        }
+    }
+
+    @Override
+    public Optional<String> evaluar(Transaccion transaccion, Optional<CuentaBancaria> origen,
+                                    CuentaBancaria destino) {
+        return Optional.of(MOTIVO)
+                .filter(motivo -> transaccion.monto().valor().compareTo(limite) > 0);
+    }
+}

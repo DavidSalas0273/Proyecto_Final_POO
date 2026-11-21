@@ -1,0 +1,38 @@
+package com.banco.ledger.api.rabbit;
+
+import com.banco.ledger.api.dto.ComandoLedger;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class RabbitTransferCommandPublisher implements TransferCommandPublisher {
+    private static final Logger log = LoggerFactory.getLogger(RabbitTransferCommandPublisher.class);
+
+    private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
+    private final String queue;
+
+    public RabbitTransferCommandPublisher(RabbitTemplate rabbitTemplate, ObjectMapper objectMapper,
+                                          @Value("${ledger.rabbit.transfer-queue}") String queue) {
+        this.rabbitTemplate = rabbitTemplate;
+        this.objectMapper = objectMapper;
+        this.queue = queue;
+    }
+
+    @Override
+    public void publicar(ComandoLedger comando) {
+        try {
+            // RabbitMQ: publica el comando en la cola transfer_commands (exchange por defecto)
+            rabbitTemplate.convertAndSend("", queue, objectMapper.writeValueAsString(comando));
+            log.info("Comando {} publicado en la cola {}", comando.txId(), queue);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("No se pudo serializar el comando " + comando.txId(), e);
+        }
+    }
+}

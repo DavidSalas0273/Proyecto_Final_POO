@@ -1,0 +1,28 @@
+package com.banco.ledger.processor.repository;
+
+import com.banco.ledger.processor.entity.CuentaJpaEntity;
+import com.banco.ledger.processor.model.CuentaBancaria;
+
+import org.springframework.stereotype.Repository;
+import java.util.Optional;
+
+@Repository
+public class CuentaRepositoryAdapter implements CuentaRepository {
+    private final SpringDataCuentaRepository jpa;
+
+    public CuentaRepositoryAdapter(SpringDataCuentaRepository jpa) {
+        this.jpa = jpa;
+    }
+
+    @Override
+    public Optional<CuentaBancaria> buscarPorTitular(String titular) {
+        return jpa.findById(titular).map(CuentaJpaEntity::aDominio);
+    }
+
+    @Override
+    public void guardar(CuentaBancaria cuenta) {
+        jpa.findById(cuenta.titular()).ifPresentOrElse(
+                existente -> existente.sincronizarCon(cuenta),
+                () -> jpa.save(CuentaJpaEntity.desdeDominio(cuenta)));
+    }
+}
